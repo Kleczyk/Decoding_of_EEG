@@ -3,3 +3,5 @@ files/
 .ipynb_checkpoints/
 __pycache__/
 .idea/
+runs/
+cwt_data/
