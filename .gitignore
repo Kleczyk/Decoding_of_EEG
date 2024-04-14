@@ -5,3 +5,4 @@ __pycache__/
 .idea/
 runs/
 cwt_data/
+*.db
