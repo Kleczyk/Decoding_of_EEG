@@ -111,9 +111,9 @@ def plot_train_val_indices(data_length, train_indices, val_indices, sequence_len
 
 
 # Przykładowe wywołanie funkcji
-data_length = 5000
-num_of_val_samples = 100
-sequence_length = 10
+data_length = 200
+num_of_val_samples = 10
+sequence_length = 4
 
 val_indices = generate_validation_indices(
     data_length, num_of_val_samples, sequence_length
