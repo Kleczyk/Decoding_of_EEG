@@ -1,2 +1,2 @@
 # Promising beginnings
-![tb](tb.png)
+![tb](docs/LaTex/tb.png)
