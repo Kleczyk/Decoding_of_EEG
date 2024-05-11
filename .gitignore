@@ -8,3 +8,4 @@ cwt_data/
 *.db
 lightning_logs/
 logs/
+data/
