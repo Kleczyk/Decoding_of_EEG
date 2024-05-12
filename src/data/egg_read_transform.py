@@ -132,7 +132,7 @@ def insert_cwt_data(db_path, cwt_data, targets):
     conn.close()
 
 
-def df_to_CWTfiles(
+def df_to_CWTdb(
         df, num_of_rows=1000, wave="cgau4", frq=160, resolution=100, db_path="cwt_data.db"
 ):
     """
