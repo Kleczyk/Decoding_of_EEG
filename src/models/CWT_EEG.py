@@ -9,6 +9,40 @@ from src.data.CWTSubset import CWTSubset
 
 
 class CWT_EEG(LightningModule):
+    """
+    Class for training the model from EEG data after CWT transformation.
+    Attributes:
+        batch_size: int - number of samples in a batch
+        sequence_length: int - length of the sequence
+        input_size: int - number of features in the input
+        hidden_size: int - number of features in the hidden state
+        num_layers: int - number of LSTM layers
+        lr: float - learning rate
+        label_smoothing: float - label smoothing factor
+        num_of_classes: int - number of classes
+        val_percent: float - percentage of validation samples
+        loss: torch.nn.CrossEntropyLoss - loss function
+        lstm: nn.LSTM - LSTM layer
+        fc: nn.Linear - fully connected layer
+        ds: CWTDataset - dataset
+        num_val_samples: int - number of validation samples
+        train_set: CWTSubset - training dataset
+        val_set: CWTSubset - validation dataset
+    Methods:
+        __init__ - constructor for the class
+        forward - forward pass of the model
+        count_parameters - counts the number of parameters in the model
+        on_train_start - logs hyperparameters
+        training_step - training step
+        configure_optimizers - configures the optimizer
+        validation_step - validation step
+        generate_validation_indices - generates validation indices
+        generate_train_indices - generates training indices
+        setup - sets up the training and validation datasets
+        train_dataloader - returns the training dataloader
+        val_dataloader - returns the validation dataloader
+        get_len_train_val - returns the length of the training and validation datasets
+    """
     def __init__(
             self,
             batch_size,
