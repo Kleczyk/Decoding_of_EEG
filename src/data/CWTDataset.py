@@ -2,7 +2,7 @@ import numpy as np
 from torch.utils.data import Dataset
 import torch
 import pickle
-import sqlite3
+import psycopg2
 
 
 class CWTDataset(Dataset):
@@ -18,7 +18,7 @@ class CWTDataset(Dataset):
 
     """
 
-    def __init__(self, db_path, sequence_length=4000):
+    def __init__(self, conn, sequence_length=4000):
         """
         Constructor for CWTDataset class that initializes the dataset.
         Args:
@@ -27,10 +27,8 @@ class CWTDataset(Dataset):
         Returns:
             None
         """
-        self.db_path = db_path
         self.sequence_length = sequence_length
-        self.conn = sqlite3.connect(db_path)
-        conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.conn = conn
         self.cursor = self.conn.cursor()
         self.cursor.execute("SELECT COUNT(*) FROM wavelet_transforms")
         self.total_samples = self.cursor.fetchone()[0]
@@ -55,7 +53,7 @@ class CWTDataset(Dataset):
 
         """
         query = (
-            "SELECT cwt_data, target FROM wavelet_transforms WHERE id BETWEEN ? AND ?"
+            "SELECT cwt_data, target FROM wavelet_transforms WHERE id >= %s AND id <= %s"
         )
 
         self.cursor.execute(query, (idx + 1, idx + self.sequence_length))

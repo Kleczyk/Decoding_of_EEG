@@ -52,9 +52,15 @@ class CWT_EEG(LightningModule):
             num_layers,
             lr,
             label_smoothing=0,
+            conn_train=None,
+            conn_val=None,
+
     ):
         super().__init__()
-        self.save_hyperparameters()
+        self.save_hyperparameters('batch_size', 'sequence_length', 'input_size', 'hidden_size', 'num_layers', 'lr',
+                                  'label_smoothing')
+        self.conn_train = conn_train
+        self.conn_val = conn_val
         self.hparams.batch_size = batch_size
         self.hparams.input_size = input_size
         self.hparams.sequence_length = sequence_length

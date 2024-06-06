@@ -5,10 +5,12 @@ from ray import tune
 import ray
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 from pytorch_lightning import Trainer
+import psycopg2
 
 
 def train_cwt_eeg(config):
-    print(config)
+    conn_train = psycopg2.connect(database="dbtrain", host="0.0.0.0", user="user", password="1234", port="5433")
+    conn_val = psycopg2.connect(database="dbval", host="0.0.0.0", user="user", password="1234", port="5434")
     model = CWT_EEG_CrossPersonValidation(
         batch_size=config['batch_size'],
         sequence_length=config['sequence_length'],
@@ -16,7 +18,9 @@ def train_cwt_eeg(config):
         hidden_size=config['hidden_size'],
         num_layers=config['num_layers'],
         lr=config['lr'],
-        label_smoothing=config.get('label_smoothing', 0)
+        label_smoothing=config.get('label_smoothing', 0),
+        conn_train=conn_train,
+        conn_val=conn_val
     )
     trainer = Trainer(
         max_epochs=10,

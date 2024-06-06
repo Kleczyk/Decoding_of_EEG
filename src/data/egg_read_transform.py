@@ -5,6 +5,7 @@ import pywt  # library for continuous wavelet transform
 import sqlite3
 import pickle
 from tqdm import tqdm
+import psycopg2 as ps2
 
 
 def file_to_DataDrame(path):
@@ -77,6 +78,47 @@ def read_all_file_df(num_exp=[3, 4], num_people=[1, 2], path="../../data/raw/"):
     return all_df
 
 
+def manage_wavelet_transforms_table(conn):
+    cursor = conn.cursor()
+
+    # Query to check if the wavelet_transforms table exists
+    check_table_query = """
+    SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE  table_schema = 'public'
+        AND    table_name   = 'wavelet_transforms'
+    );
+    """
+
+    # Execute the query to check if table exists
+    cursor.execute(check_table_query)
+    table_exists = cursor.fetchone()[0]
+
+    if table_exists:
+        # If table exists, drop it
+        print("Table wavelet_transforms exists, dropping it...")
+        cursor.execute("DROP TABLE wavelet_transforms;")
+        print("Table wavelet_transforms dropped.")
+
+    # Query to create the wavelet_transforms table
+    create_table_query = """
+    CREATE TABLE wavelet_transforms (
+    id SERIAL PRIMARY KEY,
+    cwt_data BYTEA,
+    target INT
+    );
+    """
+    print("Creating table wavelet_transforms...")
+    cursor.execute(create_table_query)
+    print("Table wavelet_transforms created.")
+
+    # Commit the changes made to the database
+    conn.commit()
+
+    # Close the cursor to avoid memory leaks
+    cursor.close()
+
+
 def create_database(db_path):
     """
     This function creates a database with a table to store the continuous wavelet transform of the signals
@@ -86,9 +128,12 @@ def create_database(db_path):
     Returns:
         None
     examples:
-        >>> create_database("cwt_data.db")
     """
-    conn = sqlite3.connect(db_path)
+    conn = ps2.connect(database="EEG_DB",
+                       host="0.0.0.0",
+                       user="user",
+                       password="1234",
+                       port="5432")
     cursor = conn.cursor()
     cursor.execute(
         """
@@ -103,7 +148,7 @@ def create_database(db_path):
     conn.close()
 
 
-def insert_cwt_data(db_path, cwt_data, targets):
+def insert_cwt_data(conn, cwt_data, targets):
     """
     This function takes in the continuous wavelet transform of the signals and the target values and saves them to a database
     Args:
@@ -113,9 +158,8 @@ def insert_cwt_data(db_path, cwt_data, targets):
     Returns:
         None
     Examples:
-        >>> insert_cwt_data("cwt_data.db", cwt_data, targets)
+        >>> insert_cwt_data( cwt_data, targets)
     """
-    conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cwt_data = cwt_data.transpose(2, 0, 1)
 
@@ -124,16 +168,15 @@ def insert_cwt_data(db_path, cwt_data, targets):
     for single_cwt in cwt_data:
         cwt_blob = pickle.dumps(np.array(single_cwt, dtype=np.float32))
         cursor.execute(
-            "INSERT INTO wavelet_transforms (cwt_data, target) VALUES (?, ?)",
+            "INSERT INTO wavelet_transforms (cwt_data, target) VALUES (%s, %s)",
             (cwt_blob, targets[i]),
         )
         i += 1
     conn.commit()
-    conn.close()
 
 
 def df_to_CWTdb(
-        df, num_of_rows=1000, wave="cgau4", frq=160, resolution=100, db_path="cwt_data.db"
+        df, conn, num_of_rows=1000, wave="cgau4", frq=160, resolution=100
 ):
     """
     This function takes in a dataframe and saves the continuous wavelet transform of the signals to a database.
@@ -148,7 +191,7 @@ def df_to_CWTdb(
     Returns:
         None
     """
-    create_database(db_path)  # Ensure this function is defined elsewhere in your code.
+    # create_database(db_path)  # Ensure this function is defined elsewhere in your code.
 
     # Calculate the number of chunks to process
     num_chunks = len(df) // num_of_rows + (1 if len(df) % num_of_rows != 0 else 0)
@@ -177,7 +220,7 @@ def df_to_CWTdb(
 
         targets = signals[-1]  # Assuming the last row are the targets
         array_cwt = np.stack(list_cwt, axis=0)
-        insert_cwt_data(db_path, array_cwt, targets)  # Ensure this function is defined elsewhere in your code.
+        insert_cwt_data(conn, array_cwt, targets)  # Ensure this function is defined elsewhere in your code.
         del array_cwt
 
 
