@@ -2,6 +2,7 @@
 data/**
 logs/**
 *.db
+**/__pycache__
 #!/docs/**
 #!/notebooks/**
 #!/scripts/**

@@ -2,39 +2,34 @@ import numpy as np
 from torch.utils.data import Dataset
 import torch
 import pickle
-import sqlite3
+import psycopg2
 
 
 class CWTDataset(Dataset):
     """
-    Dataset for EEG data after CWT transformation stored in SQLite database.
-
+    Dataset for EEG data after CWT transformation stored in PostgreSQL database.
     Attributes:
-        db_path: str - path to SQLite database
+        dbname: str - database name
+        user: str - user name
+        password: str - password
+        host: str - host
         sequence_length: int - length of the sequence
     Methods:
         __len__ - returns the number of samples in the dataset minus the sequence length
         __getitem__ - returns a sample from the dataset
-
     """
-
-    def __init__(self, db_path, sequence_length=4000):
-        """
-        Constructor for CWTDataset class that initializes the dataset.
-        Args:
-            db_path: str - path to SQLite database
-            sequence_length: int - length of the sequence
-        Returns:
-            None
-        """
-        self.db_path = db_path
+    def __init__(self, dbname, user, password, host, sequence_length=4000):
         self.sequence_length = sequence_length
-        self.conn = sqlite3.connect(db_path)
-        conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.conn = psycopg2.connect(
+          dbname="mydatabase",
+          user="myuser",
+          password="mysecretpassword",
+          host="localhost",
+          port="5432"
+        )
         self.cursor = self.conn.cursor()
         self.cursor.execute("SELECT COUNT(*) FROM wavelet_transforms")
         self.total_samples = self.cursor.fetchone()[0]
-
     def __len__(self):
         """
         Returns the number of samples in the dataset.
