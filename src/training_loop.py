@@ -8,7 +8,7 @@ from pytorch_lightning import Trainer
 import psycopg2
 from pytorch_lightning.loggers import WandbLogger
 import sqlalchemy as create_engine
-frfom ray.tune.search.bayesopt import BayesOptSearch
+from ray.tune.search.bayesopt import BayesOptSearch
 
 
 def train_cwt_eeg(config):
