@@ -4,6 +4,7 @@ data/**
 logs/**
 *.db
 **/__pycache__
+docs/source/**
 #!/docs/**
 #!/notebooks/**
 #!/scripts/**
