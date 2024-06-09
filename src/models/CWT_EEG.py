@@ -4,8 +4,8 @@ from torch import nn
 import torch
 from pytorch_lightning import LightningModule, Trainer
 from torchmetrics.functional.classification.accuracy import accuracy
-from src.data.CWTDataset import CWTDataset
-from src.data.CWTSubset import CWTSubset
+from data.CWTDataset import CWTDataset
+from data.CWTSubset import CWTSubset
 
 
 class CWT_EEG(LightningModule):
@@ -52,15 +52,10 @@ class CWT_EEG(LightningModule):
             num_layers,
             lr,
             label_smoothing=0,
-            conn_train=None,
-            conn_val=None,
-
     ):
         super().__init__()
         self.save_hyperparameters('batch_size', 'sequence_length', 'input_size', 'hidden_size', 'num_layers', 'lr',
                                   'label_smoothing')
-        self.conn_train = conn_train
-        self.conn_val = conn_val
         self.hparams.batch_size = batch_size
         self.hparams.input_size = input_size
         self.hparams.sequence_length = sequence_length
