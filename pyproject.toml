@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "decoding_of_eeg"
+version = "0.1.0"
+description = ""
+authors = ["Daniel Kleczyński <danielkleczynski@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+absl-py = "^2.1.0"
+torch = "^2.3.1"
+pytorch-lightning = "^2.2.5"
+ray = "^2.24.0"
+numpy = "^1.26.4"
+pandas = "^2.2.2"
+matplotlib = "^3.9.0"
+tqdm = "^4.66.4"
+psycopg2-binary = "^2.9.9"
+PyWavelets = "^1.6.0"
+mne = "^1.7.0"
+torchmetrics = "^1.4.0"
+jupyter = "^1.0.0"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
