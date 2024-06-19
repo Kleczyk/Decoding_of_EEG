@@ -1,0 +1,464 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% %
+%%% % weiiszablon.tex
+%%% % The Faculty of Electrical and Computer Engineering
+%%% % Rzeszow University Of Technology diploma thesis Template
+%%% % Szablon pracy dyplomowej Wydziału Elektrotechniki 
+%%% % i Informatyki PRz
+%%% % June, 2015
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\documentclass[12pt,twoside]{article}
+
+\usepackage{weiiszablon}
+\usepackage{url}
+\usepackage{hyperref}
+
+\author{Daniel Kleczyński 3AA/EF-DI}
+
+% np. EF-123456, EN-654321, ...
+\studentID{XX-??????}
+
+\title{Wykorzystanie rekurencyjnych sieci neuronowych w
+dekodowaniu intencji ruchowych na podstawie sygnałów EEG}
+\titleEN{Temat pracy po angielsku}
+
+
+%%% wybierz rodzaj pracy wpisując jeden z poniższych numerów: ...
+% 1 = inżynierska	% BSc
+% 2 = magisterska	% MSc
+% 3 = doktorska		% PhD
+%%% na miejsce zera w linijce poniżej
+\newcommand{\rodzajPracyNo}{0}
+
+
+%%% promotor
+\supervisor{ prof. dr hab. inż. Jacek Kluska}
+%% przykład: dr hab. inż. Józef Nowak, prof. PRz
+
+%%% promotor ze stopniami naukowymi po angielsku
+\supervisorEN{(academic degree) Imię i nazwisko opiekuna}
+
+\abstract{Treść streszczenia po polsku}
+\abstractEN{Treść streszczenia po angielsku}
+
+\begin{document}
+
+% strona tytułowa
+\maketitle
+
+\blankpage
+
+% spis treści
+\tableofcontents
+
+\clearpage
+\blankpage
+
+
+\begin{abstract}
+
+	Projekt ma na celu stworzenie modelu rekurencyjnych sieci neuronowych (RNN), który może być wykorzystany do dekodowania dziewięciu różnych intencji ruchowych na podstawie sygnałów EEG w czasie rzeczywistym dla interfejsów mózg-komputer. Analizowane są różne architektury sieci LSTM, w tym ilość warstw, dwukierunkowość, oraz wielkość warstwy ukrytej. Badania obejmują także transformację falkową, z uwzględnieniem typu falki, długości sekwencji i rozdzielczości transformacji. Model jest trenowany na specyficznym zbiorze danych "EG Motor Movement/Imagery Dataset" \ref{physionet_eegmmidb}, co pozwala na dokładne dostosowanie i optymalizację modelu. W ramach projektu rozwijane jest środowisko do testowania i szkolenia modeli, umożliwiające precyzyjną regulację hiperparametrów, takich jak wielkość wsadu, współczynnik uczenia, wielkość warstwy ukrytej oraz długość sekwencji. Wyniki mają na celu nie tylko opracowanie efektywnego modelu,  ale również przyczynienie się do rozwoju technologii interfejsów mózg-komputer, zwiększając ich funkcjonalność i efektywność. Wyniki te mogą pomóc osobom niepełnosprawnym, ułatwiając komunikację i interakcję ze światem zewnętrznym, oraz przyspieszyć rozwój systemów BCI, otwierając nowe możliwości dla technologii wspomagających. Co ważne, opierając się na możliwościach technologii wspomagających bez konieczności ingerencji w ciało ludzkie, EEG stanowi zewnętrzne urządzenie, co dodatkowo zwiększa dostępność i bezpieczeństwo stosowania tych rozwiązań.
+\end{abstract}
+
+\clearpage
+\section{Wstęp}
+Stworzenie modeli opartdego na siechach rekurecyjnych jest wymagacjące pod względem odpowiednie dobrania hiperparametrów co wiąrze sie z wieloma próbami oraz w celu idh dostorjenia jeśli połaczym to z faktem iż chcemy testować różene archtektury lub podejścia do przetwarania danych ilośćiteracji uczniea wysoce zwrasta.
+
+Podczas pracy nad projektem, zauważono, że zarządzanie środowiskiem projektowym i automatyzacja procesów są kluczowe dla zapewnienia efektywności i powtarzalności w pracy nad zaawansowanymi projektami inżynierskimi. W projekcie wykorzystano następujące narzędzia do automatyzacji i zarządzania środowiskiem: Docker, Poetry, Git, oraz procesy automatyzacji zadań.
+
+\section{Specyfikacja sprzętu}
+
+\subsection{Serwer}
+Serwer używany w projekcie \ref{fig:serwer_knml} jest wysoce wydajnym systemem, przystosowanym do zadań wymagających intensywnych obliczeń. Specyfikacja techniczna serwera jest następująca:
+\begin{itemize}
+	\item \textbf{Procesor}: 32 x Intel(R) Xeon(R) Gold 6234 CPU @ 3.30GHz (2 gniazda)
+	\item \textbf{Pamięć RAM}: 256 GB
+	\item \textbf{Dysk SSD NVMe}: 1 TB
+	\item \textbf{Karta graficzna}: NVIDIA RTX 8000 z 48 GB pamięci VRAM
+	\item \textbf{Dyski HDD}: 2 x 16 TB
+	\item \textbf{System operacyjny}: Debian GNU/Linux 12
+\end{itemize}
+
+\begin{figure}[ht]
+	\centering
+	\includegraphics[width=0.5\textwidth]{auxiliary/serwer_knml.jpg}
+	\caption{Serwer służący do trenowania modeli oraz poszukiwania hiperparametrów.}
+	\label{fig:serwer_knml}
+\end{figure}
+
+\subsection{Laptop do pracy lokalnej}
+Laptop służy do lokalnego przetwarzania danych, szybkich poprawek i testowania kodu przed uruchomieniem pełnoskalowych eksperymentów na serwerze. Specyfikacja laptopa:
+\begin{itemize}
+	\item \textbf{Model}: ROG Flow Z13 GZ301ZC\_GZ301ZC
+	\item \textbf{Procesor}: 12th Gen Intel i7-12700H (20 wątków) @ 4.600GHz
+	\item \textbf{Karty graficzne}:
+	      \begin{itemize}
+		      \item NVIDIA GeForce RTX 3050 Mobile
+		      \item Intel Alder Lake-P
+	      \end{itemize}
+	\item \textbf{Pamięć RAM}: 15680 MiB
+	\item \textbf{System operacyjny}: Pop!\_OS 22.04 LTS x86\_64
+\end{itemize}
+
+\section{Zarządzanie środowiskiem i automatyzacja}
+
+\subsection{Docker}
+Docker jest narzędziem do konteneryzacji aplikacji, które ułatwia ich wdrażanie i skalowanie. Zapewnia izolację aplikacji od środowiska, co zwiększa niezawodność i bezpieczeństwo.
+
+\begin{lstlisting}[language=bash,caption={Docker Compose configuration},label={lst:dockercompose}]
+	version: '3.9'
+
+	services:
+	  EEG_train_DB:
+		image: postgres:14-alpine
+		restart: always
+		expose:
+		  - "5433"
+		ports:
+		  - "5433:5433"
+		volumes:
+		  - ./db:/var/lib/postgresql/data
+		environment:
+		  - POSTGRES_PASSWORD=1234
+		  - POSTGRES_USER=user
+		  - POSTGRES_DB=dbtrain
+		command: -p 5433
+	
+	  EEG_val_DB:
+		image: postgres:14-alpine
+		restart: always
+		expose:
+		  - "5434"
+		ports:
+		  - "5434:5434"
+		volumes:
+		  - ./db1:/var/lib/postgresql/data
+		environment:
+		  - POSTGRES_PASSWORD=1234
+		  - POSTGRES_USER=user
+		  - POSTGRES_DB=dbval
+		command: -p 5434
+\end{lstlisting}
+
+\subsection{Poetry}
+Poetry to narzędzie do zarządzania zależnościami Pythona, które ułatwia zarządzanie pakietami i wersjami.
+
+
+\begin{lstlisting}[language=Python,caption={Poetry configuration},label={lst:poetrytoml}]
+	[tool.poetry]
+	name = "decoding_of_eeg"
+	version = "0.1.0"
+	description = ""
+	authors = ["Daniel Kleczynski <danielkleczynski@gmail.com>"]
+	license = "MIT"
+	
+	[tool.poetry.dependencies]
+	python = "^3.11"
+	absl-py = "^2.1.0"
+	torch = "^2.3.1"
+	pytorch-lightning = "^2.2.5"
+	ray = "^2.24.0"
+	numpy = "^1.26.4"
+	pandas = "^2.2.2"
+	matplotlib = "^3.9.0"
+	tqdm = "^4.66.4"
+	psycopg2-binary = "^2.9.9"
+	PyWavelets = "^1.6.0"
+	mne = "^1.7.0"
+	torchmetrics = "^1.4.0"
+	
+	[tool.poetry.dev-dependencies]
+	
+	[build-system]
+	requires = ["poetry-core>=1.0.0"]
+	build-backend = "poetry.core.masonry.api"
+	
+\end{lstlisting}
+
+\subsection{Git}
+Git jest systemem kontroli wersji używanym do zarządzania kodem źródłowym w projektach programistycznych.
+
+\textbf{Korzyści:}
+\begin{itemize}
+	\item Śledzenie zmian w kodzie.
+	\item Uruchamianie testów.
+\end{itemize}
+
+
+\subsection{Automatyzacja zadań}
+Automatyzacja zadań, takich jak łączenie się z serwerem oraz przekierowywanie portów, jest kluczowa dla efektywnego zarządzania i monitorowania postępów w pracy nad zaawansowanymi projektami inżynierskimi. Skrypty opisane poniżej pozwalają na automatyzację i uproszczenie procesów, które są często powtarzane, co zwiększa efektywność pracy i pozwala na skupienie się na istotnych aspektach projektu.
+
+
+\subsubsection{Skrypt do łączenia się przez VPN}
+Skrypt do łączenia się przez VPN automatyzuje proces inicjalizacji połączenia VPN, co jest niezbędne do zdalnego dostępu do zasobów sieciowych w sposób bezpieczny.
+
+\begin{lstlisting}[language=bash, caption=Skrypt do łączenia się przez VPN]
+#!/bin/bash
+# Skrypt do laczenia sie z VPN
+
+VPN_SERVER_IP="adres_ip_serwera_vpn"
+VPN_USER="nazwa_uzytkownika"
+VPN_PASSWORD="haslo"
+
+echo "laczenie z VPN..."
+openvpn --config $VPN_SERVER_IP --auth-user-pass <(echo -e "$VPN_USER\n$VPN_PASSWORD")
+echo "Polaczono z VPN."
+\end{lstlisting}
+
+\subsubsection{Skrypt do przekierowywania portów}
+Przekierowanie portów jest kluczowe w celu uzyskania dostępu do usług uruchomionych na zdalnym serwerze jako lokalne. Skrypt do przekierowywania portów automatyzuje ustawienie tuneli SSH, co ułatwia bezpieczny dostęp do zdalnych aplikacji.
+
+\begin{lstlisting}[language=bash, caption=Skrypt do przekierowywania portów]
+#!/bin/bash
+# Skrypt do przekierowywania portow
+
+LOCAL_PORT="8888"
+REMOTE_PORT="8888"
+REMOTE_IP="adres_ip_serwera"
+
+echo "Przekierowywanie portu lokalnego $LOCAL_PORT na port $REMOTE_PORT na serwerze $REMOTE_IP..."
+ssh -L ${LOCAL_PORT}:${REMOTE_IP}:${REMOTE_PORT} $REMOTE_IP
+echo "Przekierowanie ustawione."
+\end{lstlisting}
+
+Używanie tych skryptów pozwala na szybką i efektywną obsługę połączeń sieciowych i przekierowań, co jest nieocenione w środowisku badawczym i rozwojowym, gdzie czas i niezawodność są na wagę złota.
+
+\subsection{Jupyter notebook}
+Dzieki użyciu Jupyter notebook \ref{fig:jupyter_wavelet} oraz jupyter lab jesteśmy w stanie w łątwy sposób testować nowe metody analizy danych bądź nowe modele. Bezpośrednio uruchamiając nowy kod na serwwerze z poziomu urządznia na którym pracujemy. Przyspiesza to proces testowania nowych rozwiązań oraz pozwala na szybkie zobaczenie wyników.
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{auxiliary/jup.png}
+    \caption{Zrzut ekrany z Jupyter Notebook podczas testowania transformacji falkowej}
+    \label{fig:jupyter_wavelet}
+\end{figure}
+
+
+
+
+
+
+\section{Środowisko obliczeniowe}
+W ramach projektu analizy danych EEG kluczowe jest odpowiednie skonfigurowanie środowiska obliczeniowego, które musi spełniać następujące wymagania:
+\begin{itemize}
+	\item \textbf{Wsparcie dla GPU:} Znaczące przyspieszenie obliczeń jest niezbędne, szczególnie przy trenowaniu głębokich sieci neuronowych i przetwarzaniu dużych zbiorów danych.
+	\item \textbf{Możliwość pracy rozproszonej:} Środowisko powinno umożliwiać efektywne korzystanie z wielu urządzeń jednocześnie, co jest kluczowe przy skalowalnych eksperymentach i większej ilości danych.
+	\item \textbf{Zarządzanie zasobami i optymalizacja hiperparametrów:} Automatyzacja zarządzania zasobami i procesów optymalizacji, aby maksymalizować efektywność uczenia maszynowego.
+\end{itemize}
+
+\subsection{PyTorch i PyTorch Lightning}
+PyTorch jest zaawansowaną biblioteką do budowy i trenowania sieci neuronowych, a PyTorch Lightning to nakładka, która upraszcza i automatyzuje wiele aspektów pracy z PyTorch. Oto kluczowe zalety obu technologii:
+
+\begin{itemize}
+	\item \textbf{Dynamiczny graf obliczeniowy (PyTorch):} Umożliwia elastyczność w projektowaniu architektury modelu, co jest korzystne przy przetwarzaniu złożonych danych jak EEG.
+	\item \textbf{Przyspieszenie GPU (PyTorch):} Kluczowe dla efektywnego trenowania modeli, szczególnie przy dużych zbiorach danych.
+	\item \textbf{Uproszczony proces trenowania (PyTorch Lightning):} Automatyzuje rutynowe zadania, pozwalając skupić się na architekturze modelu.
+	\item \textbf{Zaawansowane logowanie i monitorowanie (PyTorch Lightning):} Integracja z TensorBoard czy MLFlow umożliwia szczegółowe śledzenie i optymalizację procesów.
+\end{itemize}
+
+\subsubsection{Implementacja modelu i trenera}
+
+\begin{lstlisting}[language=Python, caption=Klasa modelu CWT\_EEG]
+class CWT_EEG(LightningModule):
+    def __init__(
+            self,
+            batch_size,
+            sequence_length,
+            input_size,
+            hidden_size,
+            num_layers,
+            lr,
+            label_smoothing=0,
+    ):
+        super().__init__()
+        self.save_hyperparameters()
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(hidden_size, self.num_of_classes)
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Funkcja forward w modelu CWT\_EEG]
+def forward(self, x):
+    h0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+    c0 = torch.zeros(self.num_layers, x.size(0), self.hidden_size).to(x.device)
+    out, (hn, cn) = self.lstm(x, (h0, c0))
+    out = hn[-1, :, :]
+    out = self.fc(out)
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption=Konfiguracja i uruchomienie trenera w PyTorch Lightning]
+import datetime
+from pytorch_lightning import Trainer, loggers
+
+current_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+logger = loggers.TensorBoardLogger("logs", name=f"CWT_EEG_{current_time}")
+model = CWT_EEG(batch_size=11, sequence_length=10, input_size=640, num_layers=3, hidden_size=100, lr=0.001).to(device)
+trainer = Trainer(max_epochs=100, logger=logger)
+trainer.fit(model)
+\end{lstlisting}
+
+
+\subsection{Ray i RAITune}
+Ray umożliwia efektywne zarządzanie rozproszonymi zasobami komputerowymi, maksymalizując ich wykorzystanie poprzez równoległe uruchamianie wielu treningów z różnymi zestawami hiperparametrów. Dzięki temu, modele mogą być trenowane znacznie szybciej, co jest kluczowe w środowiskach badawczych i produkcyjnych, gdzie czas jest krytycznym zasobem.
+
+RAITune rozszerza możliwości Ray poprzez implementację strategii optymalizacji bayesowskiej do automatycznego dobierania i zarządzania hiperparametrami w trakcie eksperymentów. To podejście pozwala na dynamiczne dostosowywanie parametrów w odpowiedzi na wyniki treningu w czasie rzeczywistym, co skutkuje lepszą wydajnością modeli bez konieczności ręcznego eksperymentowania.
+
+\begin{lstlisting}[language=Python, caption=Integracja Ray i RAITune do efektywnego zarządzania i optymalizacji hiperparametrów]
+def train_cwt_eeg(config):
+    wandb_logger = WandbLogger(project="EEG")
+    engine_train = create_engine("postgresql+psycopg2://user:1234@0.0.0.0:5433/dbtrain", echo=True, pool_size=10)
+    engine_val = create_engine("postgresql+psycopg2://user:1234@0.0.0.0:5434/dbval", echo=True, pool_size=10)
+
+    model = CWT_EEG_CrossPersonValidation(
+        batch_size=config['batch_size'],
+        sequence_length=config['sequence_length'],
+        input_size=config['input_size'],
+        hidden_size=config['hidden_size'],
+        num_layers=config['num_layers'],
+        lr=config['lr'],
+        label_smoothing=config.get('label_smoothing', 0),
+        engine_train=engine_train,
+        engine_val=engine_val
+    )
+    checkpoint_callback = ModelCheckpoint(monitor='val_loss', dirpath='model_checkpoints', filename='model-{epoch:02d}-{val_loss:.2f}', save_top_k=3, mode='min')
+    early_stop_callback = EarlyStopping(monitor='val_loss', min_delta=0.00, patience=3, verbose=True, mode='min')
+
+    trainer = Trainer(max_epochs=10, logger=wandb_logger, enable_progress_bar=False, callbacks=[checkpoint_callback, early_stop_callback, TuneReportCallback({"loss": "ptl/val_loss"}, on="validation_end")])
+    trainer.fit(model)
+\end{lstlisting}
+
+
+\begin{lstlisting}[language=Python, caption=Integracja Ray i RAITune w treningu modelu CWT\_EEG]
+def train_cwt_eeg(config):
+    wandb_logger = WandbLogger(project="EEG")
+    model = CWT_EEG_CrossPersonValidation(
+        batch_size=config['batch_size'],
+        sequence_length=config['sequence_length'],
+        input_size=config['input_size'],
+        hidden_size=config['hidden_size'],
+        num_layers=config['num_layers'],
+        lr=config['lr'],
+        label_smoothing=config.get('label_smoothing', 0),
+        engine_train=engine_train,
+        engine_val=engine_val
+    )
+    checkpoint_callback = ModelCheckpoint(monitor='val_loss', dirpath='model_checkpoints', filename='model-{epoch:02d}-{val_loss:.2f}', save_top_k=3, mode='min')
+    early_stop_callback = EarlyStopping(monitor='val_loss', min_delta=0.00, patience=3, verbose=True, mode='min')
+
+    trainer = Trainer(max_epochs=10, logger=wandb_logger, enable_progress_bar=False, callbacks=[checkpoint_callback, early_stop_callback, TuneReportCallback({"loss": "ptl/val_loss"}, on="validation_end")])
+    trainer.fit(model)
+\end{lstlisting}
+
+
+\section{Przetwarzanie i wizualizacja danych}
+\subsection{Odczyt danych}
+Za pomocą bibloteki mne wczytujemy dane z plików .edf, a następnie przetwarzamy je w celu uzyskania odpowiedniego formatu danych do trenowania modelu. w tym przypadku dane przetymywane są w formie tabularycznej za pomocą biblioteki pandas.
+
+\begin{lstlisting}[language=Python,caption={Odczyt z plików .edf do DataFrame za pomocą mne oraz pandas},label={lst:read_data}]
+reader = mne.io.read_raw_edf(path, preload=True)
+annotations = reader.annotations  
+codes = annotations.description  
+df = pd.DataFrame(reader.get_data().T, columns=[channel.replace(".", "") for channel in reader.ch_names])  
+df = df[~(df == 0).all(axis=1)] 
+timeArray = np.array([round(x, 10) for x in np.arange(0, len(df) / 160, 0.00625)])
+codeArray = []
+counter = 0
+for timeVal in timeArray:
+    if (timeVal in annotations.onset):
+        counter += 1
+    code_of_target = int(codes[counter - 1].replace("T", ""))
+    codeArray.append(code_of_target)
+df["target"] = np.array(codeArray).T
+return df
+\end{lstlisting}
+
+\subsection{Transformacja falkowa}
+Do przeprowadzenia transformacji falkowej używamy biblioteki \texttt{PyWavelets}. Typ falki użyty w naszym przypadku to \texttt{cgau4}, który jest odpowiedni do analizy sygnałów EEG ze względu na swoją zdolność do rozróżniania różnych częstotliwości z dużą precyzją czasową. Ustalona długość sekwencji wynosząca 4000 próbek została wybrana ze względu na ograniczenia pamięciowe, co umożliwia efektywne przetwarzanie danych bez konieczności ładowania wszystkich próbek jednocześnie do pamięci.
+
+
+\begin{lstlisting}[language=Python, caption={Przetwarzanie danych EEG za pomocą transformacji falkowej (CWT)}, label={lst:wavelet_transform}]
+import numpy as np
+import pywt
+from tqdm import tqdm
+
+def df_to_CWTdb(df, conn, num_of_rows=1000, wave="cgau4", frq=160, resolution=100):
+    num_chunks = len(df) // num_of_rows + (1 if len(df) % num_of_rows != 0 else 0)
+
+    # Create a tqdm progress bar for the loop
+    for i in tqdm(range(0, len(df), num_of_rows), total=num_chunks, desc="Processing"):
+        end_index = i + num_of_rows
+        if end_index > len(df):
+            end_index = len(df)
+        signals = df.iloc[i:end_index].values
+        list_cwt = []
+
+        if signals.shape == (num_of_rows, 65):
+            signals = signals.transpose(1, 0)
+
+        for signal in signals[:-1]:  # Exclude the last item assuming it's the target
+            signal = (signal - np.min(signal)) / (np.max(signal) - np.min(signal))
+            time = np.linspace(0, len(signal) / frq, len(signal))
+            widths = np.geomspace(1, 200, num=resolution)
+            sampling_period = np.diff(time).mean()
+            cwtmatr, freqs = pywt.cwt(
+                signal, widths, wave, sampling_period=sampling_period
+            )
+            cwtmatr = np.abs(cwtmatr)
+            list_cwt.append(cwtmatr)
+
+        targets = signals[-1]  # Assuming the last row are the targets
+        array_cwt = np.stack(list_cwt, axis=0)
+        insert_cwt_data(conn, array_cwt, targets)  # Ensure this function is defined elsewhere in your code.
+        del array_cwt
+\end{lstlisting}
+
+\subsection{Wizualizacja danych i monitorowanie uczenia}
+W procesie uczenia modeli głębokich sieci neuronowych, kluczowe jest monitorowanie i wizualizacja różnych parametrów sieci w czasie rzeczywistym. To pozwala nie tylko na bieżące śledzenie postępów, ale również na archiwizację wyników eksperymentów, co jest niezbędne do późniejszej analizy i porównań. Wymagania dotyczące systemu monitorowania procesu uczenia obejmują:
+\begin{itemize}
+    \item Możliwość podglądu parametrów sieci w czasie rzeczywistym.
+    \item Archiwizacja danych o uczeniu się modeli, w tym informacji o hiperparametrach.
+    \item Dostępność danych monitorowania online, umożliwiająca dostęp z dowolnego komputera.
+\end{itemize}
+
+\subsubsection{Logery w PyTorch Lightning}
+PyTorch Lightning oferuje mechanizm logowania, który ułatwia zapisywanie i monitorowanie danych w trakcie uczenia modelu. Zintegrowany z platformami takimi jak TensorBoard, MLFlow czy Weights \& Biases, logery w PyTorch Lightning umożliwiają automatyczne śledzenie i zapisywanie nie tylko metryk, ale także hiperparametrów i wyników walidacji. 
+
+\subsubsection{Platforma Weights \& Biases}
+Weights \& Biases (WandB) to platforma, która spełnia powyższe wymagania, oferując zaawansowane narzędzia do wizualizacji danych uczenia. Jedną z kluczowych funkcji, którą oferuje WandB, jest graf \textit{Parallel Coordinates}, który pozwala na wizualizację wielowymiarowych danych. Użytkownik może łatwo porównywać wyniki różnych uruchomień eksperymentów, analizując, jak zmiana hiperparametrów wpływa na wyniki modelu.
+
+% Tutaj można dodać rzeczywiste obrazki z platformy, o ile mają być one zawarte w dokumentacji.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{auxiliary/wb3.png}
+    \caption{Przykład grafu Parallel Coordinates na platformie Weights \& Biases, pozwalający na analizę wpływu hiperparametrów na wyniki modelu.}
+    \label{fig:parallel_coordinates}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{auxiliary/wb1.png}
+    \caption{Panel podglądu platformy Weights \& Biases, prezentujący real-time monitoring parametrów sieci.}
+    \label{fig:wandb_dashboard}
+\end{figure}
+
+WandB umożliwia nie tylko wizualizację, ale także kompleksowe zarządzanie eksperymentami uczenia maszynowego, co czyni tę platformę nieocenionym narzędziem w procesie budowy i optymalizacji modeli.
+\clearpage
+
+\section*{Załączniki}
+Repozytorium kodu na GitHubie: 
+\url{https://github.com/Kleczyk/Decoding_of_EEG} (dostęp: 14.06.2024).
+
+\clearpage
+
+\addcontentsline{toc}{section}{Literatura}
+
+\begin{thebibliography}{99}
+
+	\bibitem{physionet_eegmmidb} Schalk, G. et al.: EEG Motor Movement/Imagery Dataset. PhysioNet. Dostępne na: \url{https://physionet.org/content/eegmmidb/1.0.0/} (dostęp: 14.06.2024).
+\end{thebibliography}
+
+
+\clearpage
+
+\end{document}
