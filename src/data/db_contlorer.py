@@ -13,6 +13,8 @@ class DbController:
         self.port = port
         self.conn = None
         self.connect()
+        self.shape_cwt_data = None
+        self.data_type = None
 
     def connect(self):
         self.conn = psycopg2.connect(
@@ -24,6 +26,8 @@ class DbController:
         )
 
     def insert_data(self, table: str, cwt_data: np.array, target: list):
+        self.shape_cwt_data = cwt_data.shape
+        self.data_type = cwt_data.dtype
         cursor = self.conn.cursor()
         query = sql.SQL("INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)").format(sql.Identifier(table))
         for i in range(cwt_data.shape[0]):
@@ -47,6 +51,19 @@ class DbController:
         cursor.execute(query)
         self.conn.commit()
         cursor.close
+
+    def get_data_between(self, table: str, start: datetime, end: datetime):
+        cursor = self.conn.cursor()
+        query = sql.SQL("SELECT cwt_data, target  FROM {} WHERE time BETWEEN %s AND %s").format(sql.Identifier(table))
+        cursor.execute(query, (datetime.datetime.fromtimestamp(start), datetime.datetime.fromtimestamp(end)))
+        rows = cursor.fetchall()
+        cwt_bytes = rows[0]
+        cwt_sequence = np.stack([np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data) for row in rows])
+        return cwt_sequence, np.array([row[1] for row in rows])
+
+        print(rows.type)
+        cwt_sequence = np.stack([pickle.loads(row[0]) for row in rows])
+        return rows
     def get_data(self, table: str):
         cursor = self.conn.cursor()
         query = sql.SQL("SELECT * FROM {}").format(sql.Identifier(table))
