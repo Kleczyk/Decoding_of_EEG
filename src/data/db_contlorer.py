@@ -44,6 +44,7 @@ class DbController:
             cursor.execute(query, (binary_data, int(target[i]), datetime.datetime.fromtimestamp(idx_start + i)))
         self.conn.commit()
         cursor.close()
+
     def clear_table(self, table: str):
 
         cursor = self.conn.cursor()
@@ -57,13 +58,13 @@ class DbController:
         query = sql.SQL("SELECT cwt_data, target  FROM {} WHERE time BETWEEN %s AND %s").format(sql.Identifier(table))
         cursor.execute(query, (datetime.datetime.fromtimestamp(start), datetime.datetime.fromtimestamp(end)))
         rows = cursor.fetchall()
-        cwt_bytes = rows[0]
-        cwt_sequence = np.stack([np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data) for row in rows])
-        return cwt_sequence, np.array([row[1] for row in rows])
+        cwt_sequence = np.stack(
+            [np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data) for row in rows])
+        print(f"Data between {start} and {end} has shape {cwt_sequence.shape}")
+        return cwt_sequence, np.array(rows[-1][1])
 
-        print(rows.type)
-        cwt_sequence = np.stack([pickle.loads(row[0]) for row in rows])
-        return rows
+
+
     def get_data(self, table: str):
         cursor = self.conn.cursor()
         query = sql.SQL("SELECT * FROM {}").format(sql.Identifier(table))
@@ -72,6 +73,15 @@ class DbController:
         for row in rows:
             print(row)
         cursor.close()
+
+    def get_len(self, table: str) -> int:
+        cursor = self.conn.cursor()
+        query = sql.SQL("SELECT COUNT(*) FROM {}").format(sql.Identifier(table))
+        cursor.execute(query)
+        length = cursor.fetchone()[0]
+        cursor.close()
+        return length
+
     def fetch_data(self, table):
         cursor = self.conn.cursor()
         query = sql.SQL("SELECT * FROM {}").format(sql.Identifier(table))
@@ -89,5 +99,6 @@ class DbController:
         length = cursor.fetchone()[0]  # Zwraca pierwszą wartość (czyli liczbę rekordów)
         cursor.close()
         return length
+
     def close(self):
         self.conn.close()
