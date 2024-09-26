@@ -7,13 +7,24 @@ channels_names = ['Fc5.', 'Af8.', 'P6..', 'P8..', 'Iz..']
 
 db = DbController(dbname="my_db", user="user", password="1234", host="localhost", port="5433")
 db.clear_table("training_data")
+db.clear_table("validation_data")
+
 cwt_data = DataHandler(db_controller=db, channels_names=channels_names)
-cwt_data.write2db()
+cwt_data.write2db(table="training_data")
+
+cwt_data = DataHandler(db_controller=db, channels_names=channels_names , idx_exp=[3, 4], idx_people=[3, 4])
+cwt_data.write2db(table="validation_data")
 
 
-dataset = CwtDataset(table="training_data", db_controller=db, sequence_length=1000)
+training_set = CwtDataset(table="training_data", db_controller=db, sequence_length=1000)
+val_set = CwtDataset(table="validation_data", db_controller=db, sequence_length=1000 )
+print(len(training_set))
+print(training_set)
+print(training_set[0][0].shape)
+print(training_set[0])
 
-print(len(dataset))
-print(dataset)
-print(dataset[0][0].shape)
-print(dataset[0])
+
+print(len(val_set))
+print(val_set)
+print(val_set[0][0].shape)
+print(val_set[0])

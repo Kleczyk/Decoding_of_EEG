@@ -1,5 +1,5 @@
-from read_data import read_all_file_df
-from db_contlorer import DbController
+from .read_data import read_all_file_df
+from .db_contlorer import DbController
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt
@@ -28,7 +28,7 @@ class DataHandler:
         cwtmatr = np.abs(cwtmatr)
         return cwtmatr
 
-    def write2db(self):
+    def write2db(self, table: str):
         idx_s = 0
         idx_e = idx_s + self.chunks_size
 
@@ -39,13 +39,12 @@ class DataHandler:
             target = self.df.iloc[idx_s:idx_e]["target"].to_numpy()
             cwt_signal = self.make_cwt_transform()
             cwt_signal = cwt_signal.transpose(1, 0, 2)
-            self.db_controller.insert_data_own_time("training_data", cwt_signal, target, idx_start=idx_s)
+            self.db_controller.insert_data_own_time(table, cwt_signal, target, idx_start=idx_s)
             idx_s = idx_e
             if idx_e + self.chunks_size > len(self.df):
                 idx_s = len(self.df)
             idx_e = idx_s + self.chunks_size
-            print(f"{idx_s}/{len(self.df)} {idx_s/len(self.df) * 100:.2f}")
-
+            print(f"{idx_s}/{len(self.df)} {idx_s / len(self.df) * 100:.2f}")
 
     def plot_cwt(self, signal, wavelet_type, fmin, fmax, n_frex, length):
         time = np.linspace(0, length / 160, length)  # time of the signal , 160 is the sampling rate
@@ -74,6 +73,3 @@ class DataHandler:
 
     def get_target(self):
         return self.df["target"].values
-
-
-
