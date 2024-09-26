@@ -40,7 +40,7 @@ class DataHandler:
             cwt_signal = self.make_cwt_transform()
             cwt_signal = cwt_signal.transpose(1, 0, 2)
             self.db_controller.insert_data_own_time("training_data", cwt_signal, target, idx_start=idx_s)
-            idx_s = idx_e + 1
+            idx_s = idx_e
             if idx_e + self.chunks_size > len(self.df):
                 idx_s = len(self.df)
             idx_e = idx_s + self.chunks_size
