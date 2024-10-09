@@ -9,13 +9,16 @@ from src.models.base_model_eeg import EEGClassifier
 from src.data.cwt_dataset import CwtDataset
 from src.data.db_contlorer import DbController
 from src.data.data_handler import DataHandler
+from ray import train
 from ray.train.torch import TorchTrainer
 from ray.train import ScalingConfig
+from ray.air import session
 
 
 def train_func(config):
 
-    # wandb.init(project=config.get("wandb_project", "EEG_Classification"), config=config)
+    # Initialize wandb
+    wandb.init(project=config.get("wandb_project", "EEG_Classification"), config=config)
 
     db = DbController(
         dbname="my_db", user="user", password="1234", host="localhost", port="5433"
@@ -56,7 +59,7 @@ def train_func(config):
         config["val_dataset"], batch_size=config["batch_size"], shuffle=False
     )
 
-    # Pętla treningowa
+    # Training loop with Ray
     for epoch in range(config["epochs"]):
         model.train()
         total_loss = 0
@@ -82,7 +85,7 @@ def train_func(config):
         avg_loss = total_loss / len(train_loader.dataset)
         train_accuracy = compute_accuracy(all_labels, all_preds)
 
-        # Walidacja
+        # Validation
         model.eval()
         val_loss = 0
         val_preds = []
@@ -98,7 +101,7 @@ def train_func(config):
                 val_loss += loss.item() * inputs.size(0)
 
                 preds = torch.argmax(outputs, dim=1)
-                probs = torch.exp(outputs)  # Konwersja log-softmax do prawdopodobieństw
+                probs = torch.exp(outputs)  # Convert log-softmax to probabilities
                 val_preds.extend(preds.cpu().numpy())
                 val_labels.extend(labels.cpu().numpy())
                 val_probs.extend(probs.cpu().numpy())
@@ -107,8 +110,8 @@ def train_func(config):
         val_accuracy = compute_accuracy(val_labels, val_preds)
         val_auc = compute_auc(val_labels, np.array(val_probs), config["num_classes"])
 
-        # Logowanie metryk do wandb
-        wandb.log(
+        # Log metrics to wandb
+        session.report(
             {
                 "epoch": epoch + 1,
                 "train_loss": avg_loss,
