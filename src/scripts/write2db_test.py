@@ -29,6 +29,9 @@ print(training_set[0])
 
 
 print(len(val_set))
+
+# Call the hello function
+hello()
 print(val_set)
 print(val_set[0][0].shape)
 print(val_set[0])
