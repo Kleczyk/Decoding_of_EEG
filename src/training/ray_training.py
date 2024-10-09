@@ -3,6 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 from torch.utils.data import DataLoader
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.models.metrics_fn import compute_accuracy, compute_auc
 import numpy as np
 from src.models.base_model_eeg import EEGClassifier
