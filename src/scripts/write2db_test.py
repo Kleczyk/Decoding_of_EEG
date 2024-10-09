@@ -1,4 +1,5 @@
 nfrom src.data.cwt_dataset import CwtDataset
+from src.scripts.hello import hello
 from src.data.db_contlorer import DbController
 from src.data.data_handler import DataHandler
 
