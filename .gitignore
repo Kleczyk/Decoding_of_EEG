@@ -6,7 +6,7 @@ logs/**
 **/__pycache__
 docs/source/**
 #!/docs/**
-#!/notebooks/**
+notebooks/**
 #!/scripts/**
 #!/src/**
 #!/tests/**
