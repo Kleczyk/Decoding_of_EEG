@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 from torch.utils.data import DataLoader
-from src.models.metrics_fn import compute_accuracy, compute_auc
+from ..models.metrics_fn import compute_accuracy, compute_auc
 import numpy as np
 from src.models.base_model_eeg import EEGClassifier
 from src.data.cwt_dataset import CwtDataset
