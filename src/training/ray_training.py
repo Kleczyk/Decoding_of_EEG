@@ -6,12 +6,12 @@ from torch.utils.data import DataLoader
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from .models.metrics_fn import compute_accuracy, compute_auc
+from src.models.metrics_fn import compute_accuracy, compute_auc
 import numpy as np
-from .models.base_model_eeg import EEGClassifier
-from .data.cwt_dataset import CwtDataset
-from .data.db_contlorer import DbController
-from .data.data_handler import DataHandler
+from src.models.base_model_eeg import EEGClassifier
+from src.data.cwt_dataset import CwtDataset
+from src.data.db_contlorer import DbController
+from src.data.data_handler import DataHandler
 from ray import train
 from ray.train.torch import TorchTrainer
 from ray.train import ScalingConfig
