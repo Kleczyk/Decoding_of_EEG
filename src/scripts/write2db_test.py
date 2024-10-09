@@ -1,4 +1,4 @@
-from src.data.cwt_dataset import CwtDataset
+nfrom src.data.cwt_dataset import CwtDataset
 from src.data.db_contlorer import DbController
 from src.data.data_handler import DataHandler
 
