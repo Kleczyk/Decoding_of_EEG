@@ -3,12 +3,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 from torch.utils.data import DataLoader
-from models.metrics_fn import compute_accuracy, compute_auc
+from src.models.metrics_fn import compute_accuracy, compute_auc
 import numpy as np
-from models.base_model_eeg import EEGClassifier
-from data.cwt_dataset import CwtDataset
-from data.db_contlorer import DbController
-from data.data_handler import DataHandler
+from src.models.base_model_eeg import EEGClassifier
+from src.data.cwt_dataset import CwtDataset
+from src.data.db_contlorer import DbController
+from src.data.data_handler import DataHandler
 from ray.train.torch import TorchTrainer
 from ray.train import ScalingConfig
 
