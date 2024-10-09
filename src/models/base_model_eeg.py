@@ -3,15 +3,19 @@ import torch.nn as nn
 import torch.nn.functional as F
 import wandb
 
+
 class EEGClassifier(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, num_classes, seq_length, dropout=0.5):
+    def __init__(
+        self, input_size, hidden_size, num_layers, num_classes, seq_length, dropout=0.5
+    ):
         super(EEGClassifier, self).__init__()
         self.hidden_size = hidden_size
         self.num_layers = num_layers
 
         # Warstwa LSTM
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers,
-                            batch_first=True, dropout=dropout)
+        self.lstm = nn.LSTM(
+            input_size, hidden_size, num_layers, batch_first=True, dropout=dropout
+        )
 
         # Warstwa w pełni połączona
         self.fc = nn.Linear(hidden_size, num_classes)
@@ -20,8 +24,8 @@ class EEGClassifier(nn.Module):
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
-        batch_size = x.size(0)
 
+        batch_size = x.size(0)
         # Inicjalizacja ukrytych stanów
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)

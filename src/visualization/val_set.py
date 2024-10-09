@@ -13,8 +13,8 @@ def generate_validation_indices(data_length, num_of_val_samples, sequence_length
                 "Nie można wygenerować więcej próbek z uwzględnieniem minimalnego dystansu"
             )
 
-        chosen_index = int(np.random.choice(
-            list(available_indices))
+        chosen_index = int(
+            np.random.choice(list(available_indices))
         )  # Losujemy z dostępnych indeksów
         val_indices.append(chosen_index)
 
@@ -48,9 +48,9 @@ def generate_mask(data_length, val_i, sequence_length):
         mask[start:end] = False
 
     # Zwróć indeksy, gdzie maska jest True, czyli indeksy zbioru treningowego
-    training_indices = list(np.where(mask)[
-        0
-    ])  # np.where(mask) zwraca tuple, [0] wyciąga array z indeksami
+    training_indices = list(
+        np.where(mask)[0]
+    )  # np.where(mask) zwraca tuple, [0] wyciąga array z indeksami
     return training_indices
 
 
@@ -121,4 +121,3 @@ val_indices = generate_validation_indices(
 train_indices = generate_mask(data_length, val_indices, sequence_length)
 plot_val_indices(data_length, val_indices, sequence_length)
 plot_train_val_indices(data_length, train_indices, val_indices, sequence_length)
-

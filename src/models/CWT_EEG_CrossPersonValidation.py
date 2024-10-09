@@ -23,10 +23,36 @@ class CWT_EEG_CrossPersonValidation(CWT_EEG):
         val_dataloader - returns the validation dataloader
     """
 
-    def __init__(self, batch_size, sequence_length, input_size, hidden_size, num_layers, lr, label_smoothing=0,engine_train=None, engine_val=None, ):
-        super().__init__(batch_size, sequence_length, input_size, hidden_size, num_layers, lr, label_smoothing,)
-        self.save_hyperparameters('batch_size', 'sequence_length', 'input_size', 'hidden_size', 'num_layers', 'lr',
-                                  'label_smoothing')
+    def __init__(
+        self,
+        batch_size,
+        sequence_length,
+        input_size,
+        hidden_size,
+        num_layers,
+        lr,
+        label_smoothing=0,
+        engine_train=None,
+        engine_val=None,
+    ):
+        super().__init__(
+            batch_size,
+            sequence_length,
+            input_size,
+            hidden_size,
+            num_layers,
+            lr,
+            label_smoothing,
+        )
+        self.save_hyperparameters(
+            "batch_size",
+            "sequence_length",
+            "input_size",
+            "hidden_size",
+            "num_layers",
+            "lr",
+            "label_smoothing",
+        )
         self.engine_train = engine_train
         self.engine_val = engine_val
 
@@ -35,8 +61,14 @@ class CWT_EEG_CrossPersonValidation(CWT_EEG):
         self.val_set = CWTDataset(self.engine_val, self.hparams.sequence_length)
 
     def train_dataloader(self):
-            return torch.utils.data.DataLoader(self.train_set, batch_size=self.hparams.batch_size, num_workers=16,
-                                           shuffle=True)
+        return torch.utils.data.DataLoader(
+            self.train_set,
+            batch_size=self.hparams.batch_size,
+            num_workers=16,
+            shuffle=True,
+        )
 
     def val_dataloader(self):
-        return torch.utils.data.DataLoader(self.val_set, batch_size=self.hparams.batch_size, num_workers=16)
+        return torch.utils.data.DataLoader(
+            self.val_set, batch_size=self.hparams.batch_size, num_workers=16
+        )

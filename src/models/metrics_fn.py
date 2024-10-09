@@ -1,5 +1,6 @@
 from sklearn.metrics import accuracy_score, roc_auc_score
 
+
 def compute_accuracy(labels, preds):
     """
     Oblicza dokładność modelu.
@@ -12,6 +13,7 @@ def compute_accuracy(labels, preds):
     - accuracy (float): Dokładność.
     """
     return accuracy_score(labels, preds)
+
 
 def compute_auc(labels, probs):
     """

@@ -22,26 +22,39 @@ class DbController:
             user=self.user,
             password=self.password,
             host=self.host,
-            port=self.port
+            port=self.port,
         )
 
     def insert_data(self, table: str, cwt_data: np.array, target: list):
         self.shape_cwt_data = cwt_data.shape
         self.data_type = cwt_data.dtype
         cursor = self.conn.cursor()
-        query = sql.SQL("INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)").format(sql.Identifier(table))
+        query = sql.SQL(
+            "INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)"
+        ).format(sql.Identifier(table))
         for i in range(cwt_data.shape[0]):
             binary_data = psycopg2.Binary(cwt_data[i].tobytes())
             cursor.execute(query, (binary_data, target[i], datetime.datetime.now()))
         self.conn.commit()
         cursor.close()
 
-    def insert_data_own_time(self, table: str, cwt_data: np.array, target: np.array, idx_start: int):
+    def insert_data_own_time(
+        self, table: str, cwt_data: np.array, target: np.array, idx_start: int
+    ):
         cursor = self.conn.cursor()
-        query = sql.SQL("INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)").format(sql.Identifier(table))
+        query = sql.SQL(
+            "INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)"
+        ).format(sql.Identifier(table))
         for i in range(cwt_data.shape[0]):
             binary_data = psycopg2.Binary(cwt_data[i].tobytes())
-            cursor.execute(query, (binary_data, int(target[i]), datetime.datetime.fromtimestamp(idx_start + i)))
+            cursor.execute(
+                query,
+                (
+                    binary_data,
+                    int(target[i]),
+                    datetime.datetime.fromtimestamp(idx_start + i),
+                ),
+            )
         self.conn.commit()
         cursor.close()
 
@@ -55,15 +68,24 @@ class DbController:
 
     def get_data_between(self, table: str, start: datetime, end: datetime):
         cursor = self.conn.cursor()
-        query = sql.SQL("SELECT cwt_data, target  FROM {} WHERE time BETWEEN %s AND %s").format(sql.Identifier(table))
-        cursor.execute(query, (datetime.datetime.fromtimestamp(start), datetime.datetime.fromtimestamp(end)))
+        query = sql.SQL(
+            "SELECT cwt_data, target  FROM {} WHERE time BETWEEN %s AND %s"
+        ).format(sql.Identifier(table))
+        cursor.execute(
+            query,
+            (
+                datetime.datetime.fromtimestamp(start),
+                datetime.datetime.fromtimestamp(end),
+            ),
+        )
         rows = cursor.fetchall()
         cwt_sequence = np.stack(
-            [np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data) for row in rows])
-        print(f"Data between {start} and {end} has shape {cwt_sequence.shape}")
+            [
+                np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data)
+                for row in rows
+            ]
+        )
         return cwt_sequence, np.array(rows[-1][1])
-
-
 
     def get_data(self, table: str):
         cursor = self.conn.cursor()

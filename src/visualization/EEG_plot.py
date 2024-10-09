@@ -12,67 +12,69 @@ import mne
 subject = 1
 file = 3
 
-fileName = f'files/S001/S{subject:03d}R{file:02d}.edf'
+fileName = f"files/S001/S{subject:03d}R{file:02d}.edf"
 
-reader = mne.io.read_raw_edf(fileName,preload=True)
+reader = mne.io.read_raw_edf(fileName, preload=True)
 annotations = reader.annotations
 codes = annotations.description
 
-df = pd.DataFrame(reader.get_data().T, columns=[channel.replace(".","") for channel in reader.ch_names])
+df = pd.DataFrame(
+    reader.get_data().T,
+    columns=[channel.replace(".", "") for channel in reader.ch_names],
+)
 df = df[~(df == 0).all(axis=1)]
-timeArray = np.array([round(x,5) for x in np.arange(0,len(df)/160,.00625)])
+timeArray = np.array([round(x, 5) for x in np.arange(0, len(df) / 160, 0.00625)])
 
-codeArray = []     
+codeArray = []
 counter = 0
 for timeVal in timeArray:
     if timeVal in annotations.onset:
         counter += 1
-    codeArray.append(codes[counter-1])
+    codeArray.append(codes[counter - 1])
 
 df["target"] = np.array(codeArray).T
 
 # %%
-print(df['Fc5'][1])
+print(df["Fc5"][1])
 print(df.head(2))
 
+
 # %%
-# Start T0 or T1 or T2 
+# Start T0 or T1 or T2
 def index_of_TX(df):
     key = 0
-    dict_TX_index = {key: [df['target'][0], 0] }
-    current_TX = df['target'][0]
-    for i in range(len(df['target'])):
-        if df['target'][i] != current_TX:
+    dict_TX_index = {key: [df["target"][0], 0]}
+    current_TX = df["target"][0]
+    for i in range(len(df["target"])):
+        if df["target"][i] != current_TX:
             key += 1
-            dict_TX_index[key] = [df['target'][i], i]
-            current_TX = df['target'][i]
- 
+            dict_TX_index[key] = [df["target"][i], i]
+            current_TX = df["target"][i]
+
     return dict_TX_index
-   
-        
+
+
 print(index_of_TX(df))
 
 # %%
 indexs = index_of_TX(df)
-ax= df.plot(y='Fc5')
+ax = df.plot(y="Fc5")
 ax.set_xlabel("Time [s]")
-for i in range(0,len(indexs)):
-    if indexs[i][0] == 'T0':
-        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color='r',label='T0')
-    elif indexs[i][0] == 'T1':
-        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color='b',label='T1')
-    elif indexs[i][0] == 'T2':
-        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color='y',label='T2')
-ax.hlines(y=0, xmin=0, xmax=672, color='r')
-ax.hlines(y=0, xmin=673, xmax=2000, color='g')
+for i in range(0, len(indexs)):
+    if indexs[i][0] == "T0":
+        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color="r", label="T0")
+    elif indexs[i][0] == "T1":
+        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color="b", label="T1")
+    elif indexs[i][0] == "T2":
+        ax.vlines(x=indexs[i][1], ymin=-0.0003, ymax=0.0003, color="y", label="T2")
+ax.hlines(y=0, xmin=0, xmax=672, color="r")
+ax.hlines(y=0, xmin=673, xmax=2000, color="g")
 plt.show()
-
 
 
 # %%
 # Najpierw zainstaluj pyEDFlib, jeśli jeszcze tego nie zrobiłeś:
 # !pip install pyedflib
-
 
 
 # Zastąp 'path_to_edf_file.edf' ścieżką do Twojego pliku EDF
@@ -97,10 +99,8 @@ plt.show()
 #         plt.show()
 #         if i < 1:
 #             break
-    
-#     signals_array = np.array(signals)
-    
 
+#     signals_array = np.array(signals)
 
 
 # # %%
@@ -124,12 +124,11 @@ plt.show()
 # plt.show
 
 # # %%
-# #function of sin cos 
+# #function of sin cos
 # def sin_cos(x):
-   
+
 #     y=(np.sin(x)**2*np.cos(x)**2)/(np.sin(x)+1)
 #     return y
-
 
 
 # # %%
@@ -187,14 +186,11 @@ plt.show()
 # optimizer = optim.Adam(model.parameters(), lr=0.01)
 
 
-
-
 # # %%
 # tensor_x = torch.Tensor(x) # transform to torch tensor
 # tensor_y = torch.Tensor(y)
 
 # # %%
-
 
 
 # #train the model
@@ -231,6 +227,3 @@ plt.show()
 # # %%
 while True:
     pass
-
-
-
