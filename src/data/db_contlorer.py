@@ -43,6 +43,7 @@ class DbController:
 
     def insert_data_own_time(self, table: str, cwt_data: np.array, target: np.array, idx_start: int):
         cwt_data = cwt_data.astype(np.float32)
+        cwt_data = cwt_data.reshape(cwt_data.shape[0], -1)
         self.shape_cwt_data = cwt_data.shape
         self.data_type = cwt_data.dtype
         cursor = self.conn.cursor()
@@ -92,7 +93,7 @@ class DbController:
         target_sequence = np.array([row[1] for row in rows])
 
         cursor.close()
-        return cwt_sequence, target_sequence
+        return cwt_sequence, target_sequence[-1]
 
     def get_data(self, table: str):
         cursor = self.conn.cursor()

@@ -88,9 +88,9 @@ def train_func_per_worker(config: Dict):
 
         model.train()
         for X, y in tqdm(train_dataloader, desc=f"Train Epoch {epoch}"):
-            print(y.shape)
+
             pred = model(X)
-            print(pred.shape)
+
             loss = loss_fn(pred, y)
 
             optimizer.zero_grad()
@@ -127,7 +127,7 @@ def train_fn(num_workers=2, use_gpu=True):
         "input_size": 120, # make more general
         "hidden_size": 64,
         "num_layers": 2,
-        "num_classes": 4,
+        "num_classes": 3,
         "seq_length": 256,
         "dropout": 0.5,
         "learning_rate": 0.001,

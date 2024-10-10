@@ -6,7 +6,7 @@ import wandb
 
 class EEGClassifier(nn.Module):
     def __init__(
-        self, input_size, hidden_size, num_layers, num_classes, seq_length, dropout=0.5
+        self, input_size, hidden_size, num_layers,seq_length, num_classes, dropout=0.5
     ):
         super(EEGClassifier, self).__init__()
         self.hidden_size = hidden_size
@@ -24,11 +24,13 @@ class EEGClassifier(nn.Module):
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
-        batch_size = x.size(0)
-        x = x.view(x.size(0), x.size(1), -1)
         # Inicjalizacja ukrytych stanów
+        batch_size = x.size(0)
+
+
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+
 
         # Przepuszczenie przez warstwę LSTM
         out, _ = self.lstm(x, (h0, c0))
