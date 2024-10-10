@@ -110,10 +110,10 @@ def train_func_per_worker(config: Dict):
 
         test_loss /= len(test_dataloader)
         accuracy = num_correct / num_total
-
+        session.report(metrics={"loss": test_loss, "accuracy": accuracy})
         # [3] Report metrics to Ray Train
         # ===============================
-        ray.train.report(metrics={"loss": test_loss, "accuracy": accuracy})
+        # ray.train.report(metrics={"loss": test_loss, "accuracy": accuracy})
 
 
 def train_fn(num_workers=2, use_gpu=True):
