@@ -24,8 +24,8 @@ class EEGClassifier(nn.Module):
         self.softmax = nn.LogSoftmax(dim=1)
 
     def forward(self, x):
-
         batch_size = x.size(0)
+        x = x.view(x.size(0), x.size(1), -1)
         # Inicjalizacja ukrytych stanów
         h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
         c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)

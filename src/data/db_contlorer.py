@@ -2,6 +2,7 @@ import numpy as np
 import psycopg2
 from psycopg2 import sql
 import datetime
+import pickle
 
 
 class DbController:
@@ -26,6 +27,8 @@ class DbController:
         )
 
     def insert_data(self, table: str, cwt_data: np.array, target: list):
+
+        cwt_data = cwt_data.astype(np.float32)
         self.shape_cwt_data = cwt_data.shape
         self.data_type = cwt_data.dtype
         cursor = self.conn.cursor()
@@ -38,15 +41,17 @@ class DbController:
         self.conn.commit()
         cursor.close()
 
-    def insert_data_own_time(
-        self, table: str, cwt_data: np.array, target: np.array, idx_start: int
-    ):
+    def insert_data_own_time(self, table: str, cwt_data: np.array, target: np.array, idx_start: int):
+        cwt_data = cwt_data.astype(np.float32)
+        self.shape_cwt_data = cwt_data.shape
+        self.data_type = cwt_data.dtype
         cursor = self.conn.cursor()
         query = sql.SQL(
             "INSERT INTO {} (cwt_data, target, time) VALUES (%s, %s, %s)"
         ).format(sql.Identifier(table))
         for i in range(cwt_data.shape[0]):
-            binary_data = psycopg2.Binary(cwt_data[i].tobytes())
+            # Serialize the data using pickle
+            binary_data = pickle.dumps(cwt_data[i])
             cursor.execute(
                 query,
                 (
@@ -69,7 +74,7 @@ class DbController:
     def get_data_between(self, table: str, start: datetime, end: datetime):
         cursor = self.conn.cursor()
         query = sql.SQL(
-            "SELECT cwt_data, target  FROM {} WHERE time BETWEEN %s AND %s"
+            "SELECT cwt_data, target FROM {} WHERE time BETWEEN %s AND %s"
         ).format(sql.Identifier(table))
         cursor.execute(
             query,
@@ -79,13 +84,15 @@ class DbController:
             ),
         )
         rows = cursor.fetchall()
+
+        # Deserialize the data using pickle
         cwt_sequence = np.stack(
-            [
-                np.frombuffer(row[0], dtype=self.data_type).reshape(self.shape_cwt_data)
-                for row in rows
-            ]
+            [pickle.loads(row[0]) for row in rows]
         )
-        return cwt_sequence, np.array(rows[-1][1])
+        target_sequence = np.array([row[1] for row in rows])
+
+        cursor.close()
+        return cwt_sequence, target_sequence
 
     def get_data(self, table: str):
         cursor = self.conn.cursor()

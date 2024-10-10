@@ -115,7 +115,7 @@ def file_to_DataDrame(path, channels_names=global_channels_names):
 
 
 def read_all_file_df(
-    channels_names, idx_exp=[3, 4], idx_people=[1, 2], path="../data/raw/"
+    channels_names, idx_exp=[3, 4], idx_people=[1, 2], path="../../data/raw/"
 ):
     """
     This function reads all the files in the path and returns a dataframe with the data and the target values

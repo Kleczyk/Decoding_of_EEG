@@ -1,5 +1,8 @@
-nfrom src.data.cwt_dataset import CwtDataset
-from src.scripts.hello import hello
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from src.data.cwt_dataset import CwtDataset
+
 from src.data.db_contlorer import DbController
 from src.data.data_handler import DataHandler
 
@@ -31,8 +34,7 @@ print(training_set[0])
 
 print(len(val_set))
 
-# Call the hello function
-hello()
+
 print(val_set)
 print(val_set[0][0].shape)
 print(val_set[0])
