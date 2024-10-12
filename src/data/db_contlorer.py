@@ -41,7 +41,9 @@ class DbController:
         self.conn.commit()
         cursor.close()
 
-    def insert_data_own_time(self, table: str, cwt_data: np.array, target: np.array, idx_start: int):
+    def insert_data_own_time(
+        self, table: str, cwt_data: np.array, target: np.array, idx_start: int
+    ):
         cwt_data = cwt_data.astype(np.float32)
         cwt_data = cwt_data.reshape(cwt_data.shape[0], -1)
         self.shape_cwt_data = cwt_data.shape
@@ -87,9 +89,7 @@ class DbController:
         rows = cursor.fetchall()
 
         # Deserialize the data using pickle
-        cwt_sequence = np.stack(
-            [pickle.loads(row[0]) for row in rows]
-        )
+        cwt_sequence = np.stack([pickle.loads(row[0]) for row in rows])
         target_sequence = np.array([row[1] for row in rows])
 
         cursor.close()

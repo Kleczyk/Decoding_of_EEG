@@ -6,7 +6,7 @@ import wandb
 
 class EEGClassifier(nn.Module):
     def __init__(
-            self, input_size, hidden_size, num_layers, seq_length, num_classes, dropout=0.5
+        self, input_size, hidden_size, num_layers, seq_length, num_classes, dropout=0.5
     ):
         super(EEGClassifier, self).__init__()
         self.hidden_size = hidden_size

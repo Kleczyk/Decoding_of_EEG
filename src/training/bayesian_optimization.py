@@ -5,7 +5,10 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.training.ray_training_tune import train_fn  # Ensure 'train_fn' is correctly imported
+from src.training.ray_training_tune import (
+    train_fn,
+)  # Ensure 'train_fn' is correctly imported
+
 
 def bayesian_optimization():
     # Define the search space for hyperparameters
@@ -29,11 +32,7 @@ def bayesian_optimization():
     }
 
     # Configure the scheduler and search algorithm
-    scheduler = ASHAScheduler(
-        max_t=10,
-        grace_period=1,
-        reduction_factor=2
-    )
+    scheduler = ASHAScheduler(max_t=10, grace_period=1, reduction_factor=2)
 
     search_alg = BayesOptSearch()
 
@@ -51,6 +50,7 @@ def bayesian_optimization():
 
     results = tuner.fit()
     print("Best hyperparameters found were: ", results.get_best_result().config)
+
 
 if __name__ == "__main__":
     bayesian_optimization()

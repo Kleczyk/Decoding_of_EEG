@@ -16,11 +16,13 @@ from ray.tune.search.bayesopt import BayesOptSearch
 
 # Import your modules
 import sys
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.models.metrics_fn import compute_accuracy, compute_auc
 from src.models.base_model_eeg import EEGClassifier
 from src.data.cwt_dataset import CwtDataset
 from src.data.db_contlorer import DbController
+
 
 def get_dataloaders(batch_size, config):
     db = DbController(
@@ -33,12 +35,11 @@ def get_dataloaders(batch_size, config):
     val_dataset = CwtDataset(
         table="validation_data", db_controller=db, sequence_length=config["seq_length"]
     )
-    train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True
-    )
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(val_dataset, batch_size=batch_size)
 
     return train_dataloader, test_dataloader
+
 
 def train_func_per_worker(config: Dict):
     # Cast hyperparameters to appropriate types
@@ -50,7 +51,9 @@ def train_func_per_worker(config: Dict):
     dropout = config["dropout"]
 
     # Get dataloaders
-    train_dataloader, test_dataloader = get_dataloaders(batch_size=batch_size, config=config)
+    train_dataloader, test_dataloader = get_dataloaders(
+        batch_size=batch_size, config=config
+    )
 
     # Prepare data loaders for distributed training
     train_dataloader = ray.train.torch.prepare_data_loader(train_dataloader)
@@ -104,6 +107,7 @@ def train_func_per_worker(config: Dict):
         # Report metrics to Ray Tune
         session.report({"loss": test_loss, "accuracy": accuracy})
 
+
 def main():
     # Define the search space
     search_space = {
@@ -126,11 +130,7 @@ def main():
     }
 
     # Configure the scheduler and search algorithm
-    scheduler = ASHAScheduler(
-        max_t=10,
-        grace_period=1,
-        reduction_factor=2
-    )
+    scheduler = ASHAScheduler(max_t=10, grace_period=1, reduction_factor=2)
 
     search_alg = BayesOptSearch()
 
@@ -155,6 +155,7 @@ def main():
 
     results = tuner.fit()
     print("Best hyperparameters found were: ", results.get_best_result().config)
+
 
 if __name__ == "__main__":
     main()
