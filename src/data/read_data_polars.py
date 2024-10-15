@@ -92,16 +92,16 @@ def file_to_DataFrame_polars(path, channels_names=global_channels_names):
         negation_channels_names
     )  # remove the columns that are not in the channels_names list
 
-    # Usuwamy wiersze, w których wszystkie wartości są równe zero
-    condition = None
-    for col in df.columns:
-        if condition is None:
-            condition = pl.col(col) == 0
-        else:
-            condition &= pl.col(col) == 0
-
-    # Filtrujemy wiersze, gdzie wszystkie kolumny mają wartość 0
-    df = df.filter(condition)
+    # # Usuwamy wiersze, w których wszystkie wartości są równe zero
+    # condition = None
+    # for col in df.columns:
+    #     if condition is None:
+    #         condition = pl.col(col) == 0
+    #     else:
+    #         condition &= pl.col(col) == 0
+    #
+    # # Filtrujemy wiersze, gdzie wszystkie kolumny mają wartość 0
+    # df = df.filter(condition)
 
     timeArray = np.array(
         [round(x, 10) for x in np.arange(0, len(df) / 160, 0.00625)]
@@ -134,18 +134,13 @@ def read_all_file_df_polars(
     """
     This function reads all the files in the path and returns a Polars dataframe with the data and the target values
     """
-    start_time = time.time()
     all_df = pl.DataFrame()
 
     for subject in tqdm(idx_people, desc="Writing data to DataFrame from files"):
         for file in idx_exp:
             fileName = f"{path}/S{subject:03d}/S{subject:03d}R{file:02d}.edf"
             df = file_to_DataFrame_polars(fileName, channels_names)
+            print(df)
             all_df = pl.concat([all_df, df])
 
-    end_time = time.time()
-
-    # Obliczanie czasu trwania
-    execution_time = end_time - start_time
-    print(f"Czas działania pętli: {execution_time:.2f} sekund")
     return all_df
