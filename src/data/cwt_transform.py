@@ -34,6 +34,7 @@ class CwtTransform:
         cwtmatr, freqs = pywt.cwt(
             signal, widths, self.wavelet_type, sampling_period=sampling_period
         )
+        cwtmatr= np.abs(cwtmatr)
         return cwtmatr
 
     def plot_transform(self, signal: np.array):

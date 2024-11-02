@@ -19,21 +19,66 @@ import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.models.metrics_fn import compute_accuracy, compute_auc
-from src.models.base_model_eeg import EEGClassifier
-from src.data.cwt_dataset import CwtDataset
+from src.models.eeg_lstm_fn_cwt import Eeg_lstm_fn_cwt
+from src.models.eeg_lstm_fc import Eeg_lstm_fc
+from src.data.cwt_dataset_polars import CwtDatasetPolars
+from src.data.dataset_polars import DatasetPolars
+import src.data.read_data_polars as rdp
 from src.data.db_contlorer import DbController
 
-
+global_channels_names = [
+        "Fc5.",
+        "Fc3.",
+        "Fc1.",
+        "Af3.",
+        "Afz.",
+        "Af4.",
+        "Af8.",
+        "F7..",
+        "F5..",
+        "F3..",
+        "F1..",
+        "Fz..",
+        "F2..",
+        "F4..",
+        "F6..",
+        "F8..",
+        "Ft7.",
+        "Ft8.",
+        "T7..",
+        "T8..",
+        "T9..",
+        "T10.",
+        "Tp7.",
+        "Tp8.",
+        "P7..",
+        "P5..",
+        "P3..",
+        "P1..",
+        "Pz..",
+        "P2..",
+        "P4..",
+        "P6..",
+        "P8..",
+        "Po7.",
+        "Po3.",
+        "Poz.",
+        "Po4.",
+        "Po8.",
+        "O1..",
+        "Oz..",
+        "O2..",
+        "Iz..",
+    ]
 def get_dataloaders(batch_size, config):
-    db = DbController(
-        dbname="my_db", user="user", password="1234", host="localhost", port="5433"
-    )
 
-    train_dataset = CwtDataset(
-        table="training_data", db_controller=db, sequence_length=config["seq_length"]
+    df = rdp.read_all_file_df_polars(channels_names=global_channels_names)
+
+    train_dataset = DatasetPolars(
+        df=df, sequence_length=config["seq_length"]
     )
-    val_dataset = CwtDataset(
-        table="validation_data", db_controller=db, sequence_length=config["seq_length"]
+    val_dataset = DatasetPolars(
+        df=df, sequence_length=config["seq_length"]
     )
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     test_dataloader = DataLoader(val_dataset, batch_size=batch_size)
@@ -60,19 +105,20 @@ def train_func_per_worker(config: Dict):
     test_dataloader = ray.train.torch.prepare_data_loader(test_dataloader)
 
     # Initialize model
-    model = EEGClassifier(
-        input_size=config["input_size"],
+    model = Eeg_lstm_fc(
+        resolution=config["resolution"],
+        num_channels=config["num_channels"],
+        seq_length=config["seq_length"],
         hidden_size=hidden_size,
         num_layers=num_layers,
         num_classes=config["num_classes"],
-        seq_length=config["seq_length"],
         dropout=dropout,
     )
 
     # Prepare model for distributed training
     model = ray.train.torch.prepare_model(model)
 
-    loss_fn = nn.NLLLoss()
+    loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     # Training loop
@@ -83,6 +129,7 @@ def train_func_per_worker(config: Dict):
         model.train()
         for X, y in tqdm(train_dataloader, desc=f"Train Epoch {epoch}"):
             pred = model(X)
+            y = y.squeeze()
             loss = loss_fn(pred, y)
 
             optimizer.zero_grad()
@@ -95,6 +142,7 @@ def train_func_per_worker(config: Dict):
         with torch.no_grad():
             for X, y in tqdm(test_dataloader, desc=f"Test Epoch {epoch}"):
                 pred = model(X)
+                y = y.squeeze()
                 loss = loss_fn(pred, y)
 
                 test_loss += loss.item()
@@ -116,11 +164,12 @@ def main():
             "batch_size_per_worker": tune.loguniform(8, 64),
             "hidden_size": tune.loguniform(32, 128),
             "num_layers": tune.loguniform(1, 3),
-            "dropout": tune.uniform(0.1, 0.7),
+            "dropout": tune.uniform(0.0, 0.4),
             "epochs": 10,
-            "input_size": 120,
-            "num_classes": 3,
+            "resolution": 20, #TODO make it dynamic for CWT transform resolution
+            "num_channels": len(global_channels_names),
             "seq_length": 256,
+            "num_classes": 3,
             "wandb_project": "EEG_Classification",
         },
         "scaling_config": {

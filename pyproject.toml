@@ -22,6 +22,8 @@ torchmetrics = "^1.4.0"
 jupyter = "^1.0.0"
 scikit-learn = "^1.0.2"
 wandb = "^0.18.1"
+polars = "^1.12.0"
+bayesian-optimization = "1.5.1"
 
 [tool.poetry.dev-dependencies]
 

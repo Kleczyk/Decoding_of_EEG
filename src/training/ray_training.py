@@ -9,7 +9,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from src.models.metrics_fn import compute_accuracy, compute_auc
 import numpy as np
-from src.models.base_model_eeg import EEGClassifier
+from src.models.eeg_lstm_fn_cwt import EEGClassifier
 from src.data.cwt_dataset import CwtDataset
 from src.data.db_contlorer import DbController
 from src.data.data_handler import DataHandler

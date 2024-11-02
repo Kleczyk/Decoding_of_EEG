@@ -5,9 +5,7 @@ import sys
 import os
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.training.ray_training_tune import (
-    train_fn,
-)  # Ensure 'train_fn' is correctly imported
+from src.training.ray_training_tune import base_trainer
 
 
 def bayesian_optimization():
