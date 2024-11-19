@@ -43,19 +43,27 @@ class CWT_EEG(LightningModule):
         val_dataloader - returns the validation dataloader
         get_len_train_val - returns the length of the training and validation datasets
     """
+
     def __init__(
-            self,
-            batch_size,
-            sequence_length,
-            input_size,
-            hidden_size,
-            num_layers,
-            lr,
-            label_smoothing=0,
+        self,
+        batch_size,
+        sequence_length,
+        input_size,
+        hidden_size,
+        num_layers,
+        lr,
+        label_smoothing=0,
     ):
         super().__init__()
-        self.save_hyperparameters('batch_size', 'sequence_length', 'input_size', 'hidden_size', 'num_layers', 'lr',
-                                  'label_smoothing')
+        self.save_hyperparameters(
+            "batch_size",
+            "sequence_length",
+            "input_size",
+            "hidden_size",
+            "num_layers",
+            "lr",
+            "label_smoothing",
+        )
         self.hparams.batch_size = batch_size
         self.hparams.input_size = input_size
         self.hparams.sequence_length = sequence_length
@@ -122,7 +130,7 @@ class CWT_EEG(LightningModule):
         return loss
 
     def generate_validation_indices(
-            self, data_length, num_of_val_samples, sequence_length
+        self, data_length, num_of_val_samples, sequence_length
     ):
         available_indices = set(range(data_length))
         val_indices = []

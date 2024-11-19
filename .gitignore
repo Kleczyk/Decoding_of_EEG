@@ -6,7 +6,7 @@ logs/**
 **/__pycache__
 docs/source/**
 #!/docs/**
-#!/notebooks/**
+notebooks/**
 #!/scripts/**
 #!/src/**
 #!/tests/**
@@ -16,3 +16,4 @@ docs/source/**
 #!.gitmodules
 #!.git/**
 #!README.md
+.aider*
