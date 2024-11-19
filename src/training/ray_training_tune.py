@@ -18,13 +18,13 @@ from ray.tune.search.optuna import OptunaSearch
 import sys
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from src.models.metrics_fn import compute_accuracy, compute_auc
-from src.models.eeg_lstm_fn_cwt import Eeg_lstm_fn_cwt
-from src.models.eeg_lstm_fc import Eeg_lstm_fc
-from src.data.cwt_dataset_polars import CwtDatasetPolars
-from src.data.dataset_polars import DatasetPolars
-import src.data.read_data_polars as rdp
-from src.data.db_contlorer import DbController
+from models.metrics_fn import compute_accuracy, compute_auc
+from models.eeg_lstm_fn_cwt import Eeg_lstm_fn_cwt
+from models.eeg_lstm_fc import Eeg_lstm_fc
+from data.cwt_dataset_polars import CwtDatasetPolars
+from data.dataset_polars import DatasetPolars
+import data.read_data_polars as rdp
+from data.db_contlorer import DbController
 
 global_channels_names = [
         "Fc5.",
