@@ -18,7 +18,7 @@ class Dataset(Dataset):
         )
 
     def __len__(self):
-        return self.df.height - self.sequence_length
+        return self.df.shape[0] - self.sequence_length
 
     def get_target(self, idx):
         return torch.tensor(self.df[idx]["target"].to_numpy(), dtype=torch.long)
