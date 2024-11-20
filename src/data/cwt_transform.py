@@ -8,8 +8,7 @@ import sys
 import pywt
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import src.data.read_data_polars as rdp
+import data.read_data_polars as rdp
 
 
 class CwtTransform:

@@ -190,7 +190,7 @@ def main():
         train_loop_config={},  # Will be overridden by param_space
         scaling_config= ScalingConfig(
                 # Number of distributed workers.
-                num_workers=5,
+                num_workers=1,
                 # Turn on/off GPU.
                 use_gpu=True,
                 # Specify resources used for trainer.
