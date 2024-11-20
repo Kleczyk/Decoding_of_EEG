@@ -1,6 +1,6 @@
 import multiprocessing
 
-from data.dataset import Dataset
+
 
 #asdasd
 if __name__ == "__main__":
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # Import your modules
     import sys
 
-
+    from data.dataset import Dataset
     from models.metrics_fn import compute_accuracy, compute_auc
     from models.eeg_lstm_fn_cwt import Eeg_lstm_fn_cwt
     from models.eeg_lstm_fc import Eeg_lstm_fc
