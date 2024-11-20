@@ -12,12 +12,12 @@ from ray.air import session
 from ray.train import ScalingConfig
 from ray.train.torch import TorchTrainer
 from ray.tune.schedulers import ASHAScheduler
-from ray.tune.search.optuna import OptunaSearch
+from ray.tune.search.bayesopt import BayesOptSearch
 
 # Import your modules
 import sys
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from models.metrics_fn import compute_accuracy, compute_auc
 from models.eeg_lstm_fn_cwt import Eeg_lstm_fn_cwt
 from models.eeg_lstm_fc import Eeg_lstm_fc
@@ -109,10 +109,10 @@ def train_func_per_worker(config: Dict):
         resolution=config["resolution"],
         num_channels=config["num_channels"],
         seq_length=config["seq_length"],
-        hidden_size=int(config["hidden_size"]),
-        num_layers=int(config["num_layers"]),
+        hidden_size=hidden_size,
+        num_layers=num_layers,
         num_classes=config["num_classes"],
-        dropout=config["dropout"],
+        dropout=dropout,
     )
 
     # Prepare model for distributed training
@@ -165,15 +165,15 @@ def main():
             "hidden_size": tune.loguniform(32, 128),
             "num_layers": tune.loguniform(1, 3),
             "dropout": tune.uniform(0.0, 0.4),
-            "epochs": 2,
+            "epochs": 10,
             "resolution": 20, #TODO make it dynamic for CWT transform resolution
             "num_channels": len(global_channels_names),
-            "seq_length": 10,
+            "seq_length": 256,
             "num_classes": 3,
             "wandb_project": "EEG_Classification",
         },
         "scaling_config": {
-            "num_workers": 2,
+            "num_workers": 1,
             "use_gpu": True,
         },
     }
@@ -181,23 +181,13 @@ def main():
     # Configure the scheduler and search algorithm
     scheduler = ASHAScheduler(max_t=10, grace_period=1, reduction_factor=2)
 
-
-    search_alg = OptunaSearch()
+    search_alg = BayesOptSearch()
 
     # Create a base trainer
     base_trainer = TorchTrainer(
         train_loop_per_worker=train_func_per_worker,
         train_loop_config={},  # Will be overridden by param_space
-        scaling_config= ScalingConfig(
-                # Number of distributed workers.
-                num_workers=1,
-                # Turn on/off GPU.
-                use_gpu=True,
-                # Specify resources used for trainer.
-                trainer_resources={"CPU": 1},
-                # Try to schedule workers on different nodes.
-                placement_strategy="SPREAD",
-            )
+        scaling_config=ScalingConfig(),
     )
 
     tuner = tune.Tuner(
@@ -208,9 +198,7 @@ def main():
             mode="min",
             search_alg=search_alg,
             scheduler=scheduler,
-            num_samples=1000,
-            max_concurrent_trials=10,
-            reuse_actors=True,
+            num_samples=20,
         ),
     )
 

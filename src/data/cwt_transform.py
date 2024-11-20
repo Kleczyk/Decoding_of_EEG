@@ -8,6 +8,7 @@ import sys
 import pywt
 import matplotlib.pyplot as plt
 
+
 import data.read_data_polars as rdp
 
 
