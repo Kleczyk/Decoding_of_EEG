@@ -177,7 +177,7 @@ def main():
             "use_gpu": True,
         },
     }
-
+    #new search space
     # Configure the scheduler and search algorithm
     scheduler = ASHAScheduler(max_t=10, grace_period=1, reduction_factor=2)
 
