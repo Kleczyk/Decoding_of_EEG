@@ -21,10 +21,10 @@ class Dataset(Dataset):
         return self.df.shape[0] - self.sequence_length
 
     def get_target(self, idx):
-        return torch.tensor(self.df[idx]["target"].to_numpy(), dtype=torch.long)
+        return torch.tensor(self.df.iloc[idx]["target"], dtype=torch.long)
 
     def getdata(self, idx):
-        return torch.tensor(self.df[idx: idx + self.sequence_length, :-1].to_numpy(),
+        return torch.tensor(self.df.iloc[idx: idx + self.sequence_length, :-1].values,
                             dtype=torch.float32)
 
     def __getitem__(self, idx):
