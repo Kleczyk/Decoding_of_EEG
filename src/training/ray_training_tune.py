@@ -2,6 +2,9 @@ import multiprocessing
 #asdasd
 if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
+    import sys
+    sys.path.insert(0, '/home/danielkleczykkleczynski/repos/Decoding_of_EEG/src')
+
     import os
     from typing import Dict
 
