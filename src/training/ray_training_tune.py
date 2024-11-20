@@ -1,4 +1,7 @@
 import multiprocessing
+
+from data.dataset import Dataset
+
 #asdasd
 if __name__ == "__main__":
     multiprocessing.set_start_method("spawn")
@@ -30,7 +33,8 @@ if __name__ == "__main__":
     from models.eeg_lstm_fc import Eeg_lstm_fc
     from data.cwt_dataset_polars import CwtDatasetPolars
     from data.dataset_polars import DatasetPolars
-    import data.read_data_polars as rdp
+    from data.cwt_dataset import CwtDataset
+    import data.read_data as rd
     from data.db_contlorer import DbController
 
     global_channels_names = [
@@ -79,12 +83,12 @@ if __name__ == "__main__":
         ]
     def get_dataloaders(batch_size, config):
 
-        df = rdp.read_all_file_df_polars(channels_names=global_channels_names)
+        df = rd.read_all_file_df(channels_names=global_channels_names)
 
-        train_dataset = DatasetPolars(
+        train_dataset = Dataset(
             df=df, sequence_length=config["seq_length"]
         )
-        val_dataset = DatasetPolars(
+        val_dataset = Dataset(
             df=df, sequence_length=config["seq_length"]
         )
         train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
