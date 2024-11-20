@@ -129,7 +129,7 @@ def file_to_DataFrame_polars(path, channels_names=global_channels_names):
 
 
 def read_all_file_df_polars(
-    channels_names, idx_exp=[3, 4], idx_people=[1, 2], path="/home/daniel/repos/Decoding_of_EEG/data/raw"
+    channels_names, idx_exp=[3, 4], idx_people=[1, 2], path="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw"
 ):
     """
     This function reads all the files in the path and returns a Polars dataframe with the data and the target values
