@@ -5,6 +5,7 @@ import optuna
 from optuna.integration import PyTorchLightningPruningCallback
 import lightning.pytorch as pl
 import torch
+from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from torch import nn
 from torch.utils.data import DataLoader, random_split, TensorDataset
@@ -100,7 +101,7 @@ def bayesian_optimization():
         num_samples=100,
         metric="val_acc",
         mode="max",
-        resources_per_trial={"cpu": 2, "gpu": 1},
+        # resources_per_trial={"cpu": 2, "gpu": 1},
     )
 
     print("Best hyperparameters found:", analysis.best_config)
