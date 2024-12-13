@@ -115,7 +115,7 @@ def bayesian_optimization():
         )
 
         # Logger dla Weight and Biases
-        wandb_logger = WandbLogger(project="EEG_Classification_final", config=config)
+        wandb_logger = WandbLogger(project="EEG_Classification_final")
 
         # Trener PyTorch Lightning
         trainer = pl.Trainer(
