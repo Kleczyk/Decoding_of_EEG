@@ -28,11 +28,12 @@ global_channels_names = [
     "Po7.", "Po3.", "Poz.", "Po4.", "Po8.", "O1..", "Oz..", "O2..", "Iz..",
 ]
 
+
 def get_dataloaders(config: dict) -> (DataLoader, DataLoader):
-    df_train = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[1, 2, 3, 4, 5, 6, 7, 8, 9],
-                                   idx_exp=range(3, 13), path=DATA_PATH)
-    df_val = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[10, 11, 12, 13],
-                                 idx_exp=range(3, 13), path=DATA_PATH)
+    df_train = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[1, 2, 8, 9],
+                                   idx_exp=[3, 7, 11], path=DATA_PATH)
+    df_val = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[10, 13],
+                                 idx_exp=[3, 7, 11], path=DATA_PATH)
 
     train_dataset = Dataset(
         df=df_train, sequence_length=config["seq_length"]
@@ -44,6 +45,7 @@ def get_dataloaders(config: dict) -> (DataLoader, DataLoader):
     val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
     return train_dataloader, val_dataloader
+
 
 def train_model(config):
     wandb.init(project="EEG_Classification_finale", reinit=True)
@@ -74,17 +76,18 @@ def train_model(config):
 
     wandb.finish()
 
+
 def bayesian_optimization():
     # Define the search space for hyperparameters
     search_space = {
         "lr": tune.loguniform(1e-5, 1e-1),
-        "batch_size": tune.choice([8, 16, 32, 64, 128, 256, 512]),
-        "hidden_size": tune.choice([32, 64, 128]),
+        "batch_size": tune.choice([8, 16, 32, 64, 128]),
+        "hidden_size": tune.lograndint(1, 1000000),
         "num_layers": tune.randint(1, 4),
         "dropout": tune.uniform(0, 0.4),
         "input_size": tune.randint(8, 1600),
         "num_classes": 3,
-        "seq_length": tune.randint(8, 1600),
+        "seq_length": tune.randint(8, 800),
     }
 
     scheduler = ASHAScheduler(
@@ -105,6 +108,7 @@ def bayesian_optimization():
     )
 
     print("Best hyperparameters found:", analysis.best_config)
+
 
 if __name__ == "__main__":
     wandb.login()

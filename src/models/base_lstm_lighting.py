@@ -2,7 +2,7 @@
 import lightning.pytorch as pl
 import torch
 from torch import nn
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
 
 
 class LSTM_base_lighting(pl.LightningModule):
@@ -43,11 +43,20 @@ class LSTM_base_lighting(pl.LightningModule):
         recall = recall_score(y.cpu(), y_pred.cpu(), average='macro', zero_division=0)
         f1 = f1_score(y.cpu(), y_pred.cpu(), average='macro')
 
+        # Compute AUC only for binary or multi-class (with `multi_class='ovr'`)
+        try:
+            y_prob = torch.softmax(y_hat, dim=1).cpu().detach().numpy()
+            y_true = y.cpu().numpy()
+            auc = roc_auc_score(y_true, y_prob, multi_class='ovr')
+        except ValueError:
+            auc = float('nan')  # Handle cases where AUC can't be computed
+
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_acc", acc, prog_bar=True)
         self.log("val_precision", precision, prog_bar=True)
         self.log("val_recall", recall, prog_bar=True)
         self.log("val_f1", f1, prog_bar=True)
+        self.log("val_auc", auc, prog_bar=True)
 
         return loss
 
