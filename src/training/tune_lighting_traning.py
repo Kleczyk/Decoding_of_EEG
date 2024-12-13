@@ -106,7 +106,7 @@ def bayesian_optimization():
         num_samples=100,
         metric="val_acc",
         mode="max",
-        resources_per_trial={"cpu": 1, "gpu": 0.5},
+        # resources_per_trial={"cpu": 1, "gpu": 0.5},
     )
 
     print("Best hyperparameters found:", analysis.best_config)
