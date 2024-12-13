@@ -1,0 +1,1 @@
+DATA_PATH = "/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw"
