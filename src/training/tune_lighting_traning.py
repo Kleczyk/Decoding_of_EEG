@@ -1,19 +1,10 @@
-import os
-from pathlib import Path
 
-import optuna
-from optuna.integration import PyTorchLightningPruningCallback
 import lightning.pytorch as pl
-import torch
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
-from torch import nn
 from torch.utils.data import DataLoader, random_split, TensorDataset
 from lightning.pytorch.loggers import WandbLogger
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score
-import matplotlib.pyplot as plt
-import pandas as pd
 import wandb
 
 import data.read_data as rd
@@ -118,5 +109,4 @@ def bayesian_optimization():
 
 
 if __name__ == "__main__":
-    wandb.login()
     bayesian_optimization()
