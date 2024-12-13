@@ -45,7 +45,7 @@ def train_model(config):
 
     train_loader, val_loader = get_dataloaders(config)
 
-    # Model
+   
     model = LSTM_base_lighting(
         sequence_length=config["seq_length"],
         hidden_size=config["hidden_size"],
@@ -56,10 +56,9 @@ def train_model(config):
         num_channels=len(global_channels_names)
     )
 
-    # Logger dla Weight and Biases
+    
     wandb_logger = WandbLogger(project="EEG_Classification_finale")
 
-    # Trener PyTorch Lightning
     trainer = pl.Trainer(
         max_epochs=10,
         logger=wandb_logger,
@@ -72,7 +71,6 @@ def train_model(config):
 
 
 def bayesian_optimization():
-    # Define the search space for hyperparameters
     search_space = {
         "lr": tune.loguniform(1e-5, 1e-1),
         "batch_size": tune.choice([8, 16, 32, 64, 128]),
@@ -84,8 +82,8 @@ def bayesian_optimization():
         "seq_length": tune.randint(8, 800),
     }
     optuna_search = OptunaSearch(
-        metric="val_acc",  # Optymalizowana metryka
-        mode="max"  # Maksymalizacja metryki
+        metric="val_acc",  
+        mode="max"  
     )
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
