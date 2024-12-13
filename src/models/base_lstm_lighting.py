@@ -6,12 +6,14 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 
 
 class LSTM_base_lighting(pl.LightningModule):
-    def __init__(self, input_size, hidden_size, num_layers, dropout, learning_rate, num_classes):
+    def __init__(self, sequence_length, hidden_size, num_layers, dropout, learning_rate, num_classes,num_channels):
         super().__init__()
         self.save_hyperparameters()
-
+        self.num_layers = num_layers
+        self.hidden_size = hidden_size
         self.lstm = nn.LSTM(
-            input_size=input_size,
+            input_size=num_channels,
+            # sequence_length=sequence_length,
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout,
@@ -21,7 +23,10 @@ class LSTM_base_lighting(pl.LightningModule):
         self.criterion = nn.CrossEntropyLoss()
 
     def forward(self, x):
-        lstm_out, _ = self.lstm(x)
+        batch_size = x.size(0)
+        h0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        c0 = torch.zeros(self.num_layers, batch_size, self.hidden_size).to(x.device)
+        lstm_out, _ = self.lstm(x, (h0, c0))
         logits = self.fc(lstm_out[:, -1, :])
         return logits
 

@@ -41,6 +41,7 @@ def get_dataloaders(config: dict) -> (DataLoader, DataLoader):
     val_dataset = Dataset(
         df=df_val, sequence_length=config["seq_length"]
     )
+    print(f"Train dataset size: {train_dataset[0][0].shape}")
     train_dataloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
@@ -54,12 +55,13 @@ def train_model(config):
 
     # Model
     model = LSTM_base_lighting(
-        input_size=config["seq_length"],
+        sequence_length=config["seq_length"],
         hidden_size=config["hidden_size"],
         num_layers=config["num_layers"],
         dropout=config["dropout"],
         learning_rate=config["lr"],
-        num_classes=config["num_classes"]
+        num_classes=config["num_classes"],
+        num_channels=len(global_channels_names)
     )
 
     # Logger dla Weight and Biases
@@ -82,7 +84,7 @@ def bayesian_optimization():
     search_space = {
         "lr": tune.loguniform(1e-5, 1e-1),
         "batch_size": tune.choice([8, 16, 32, 64, 128]),
-        "hidden_size": tune.lograndint(1, 1000000),
+        "hidden_size": tune.lograndint(100, 10000),
         "num_layers": tune.randint(1, 4),
         "dropout": tune.uniform(0, 0.4),
         # "input_size": tune.randint(8, 1600),
