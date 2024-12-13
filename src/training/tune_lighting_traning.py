@@ -7,6 +7,7 @@ import lightning.pytorch as pl
 import torch
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
+from ray.tune.search.optuna import OptunaSearch
 from torch import nn
 from torch.utils.data import DataLoader, random_split, TensorDataset
 from lightning.pytorch.loggers import WandbLogger
@@ -91,7 +92,10 @@ def bayesian_optimization():
         "num_classes": 3,
         "seq_length": tune.randint(8, 800),
     }
-
+    optuna_search = OptunaSearch(
+        metric="val_acc",  # Optymalizowana metryka
+        mode="max"  # Maksymalizacja metryki
+    )
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
         max_t=10,
@@ -103,10 +107,11 @@ def bayesian_optimization():
         train_model,
         config=search_space,
         scheduler=scheduler,
+        search_alg=optuna_search,
         num_samples=100,
         metric="val_acc",
         mode="max",
-        # resources_per_trial={"cpu": 1, "gpu": 0.5},
+        resources_per_trial={"cpu": 1, "gpu": 0.25},
     )
 
     print("Best hyperparameters found:", analysis.best_config)
