@@ -54,7 +54,7 @@ def train_model(config):
 
     # Model
     model = LSTM_base_lighting(
-        input_size=config["input_size"],
+        input_size=config["seq_length"],
         hidden_size=config["hidden_size"],
         num_layers=config["num_layers"],
         dropout=config["dropout"],
@@ -85,7 +85,7 @@ def bayesian_optimization():
         "hidden_size": tune.lograndint(1, 1000000),
         "num_layers": tune.randint(1, 4),
         "dropout": tune.uniform(0, 0.4),
-        "input_size": tune.randint(8, 1600),
+        # "input_size": tune.randint(8, 1600),
         "num_classes": 3,
         "seq_length": tune.randint(8, 800),
     }
