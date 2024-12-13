@@ -13,7 +13,6 @@ class LSTM_base_lighting(pl.LightningModule):
         self.hidden_size = hidden_size
         self.lstm = nn.LSTM(
             input_size=num_channels,
-            # sequence_length=sequence_length,
             hidden_size=hidden_size,
             num_layers=num_layers,
             dropout=dropout,
@@ -48,13 +47,12 @@ class LSTM_base_lighting(pl.LightningModule):
         recall = recall_score(y.cpu(), y_pred.cpu(), average='macro', zero_division=0)
         f1 = f1_score(y.cpu(), y_pred.cpu(), average='macro')
 
-        # Compute AUC only for binary or multi-class (with `multi_class='ovr'`)
         try:
             y_prob = torch.softmax(y_hat, dim=1).cpu().detach().numpy()
             y_true = y.cpu().numpy()
             auc = roc_auc_score(y_true, y_prob, multi_class='ovr')
         except ValueError:
-            auc = float('nan')  # Handle cases where AUC can't be computed
+            auc = float('nan') 
 
         self.log("val_loss", loss, prog_bar=True)
         self.log("val_acc", acc, prog_bar=True)
