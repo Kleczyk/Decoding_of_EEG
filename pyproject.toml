@@ -11,4 +11,5 @@ dependencies = [
     "pywavelets>=1.8.0",
     "ray[all]>=2.40.0",
     "scikit-learn>=1.6.0",
+    "wandb>=0.19.1",
 ]
