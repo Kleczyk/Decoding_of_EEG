@@ -1,18 +1,23 @@
+import multiprocessing
+multiprocessing.set_start_method('spawn')
 
 import lightning.pytorch as pl
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
-from torch.utils.data import DataLoader, random_split, TensorDataset
+from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 import wandb
 
-import data.read_data as rd
+from data.read_data import read_all_file_df
 from data.dataset import Dataset
-from models.base_lstm_lighting import LSTM_base_lighting
+from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
 
-global_channels_names = [
+
+
+# Define global channel names
+GLOBAL_CHANNEL_NAMES = [
     "Fc5.", "Fc3.", "Fc1.", "Af3.", "Afz.", "Af4.", "Af8.",
     "F7..", "F5..", "F3..", "F1..", "Fz..", "F2..", "F4..", "F6..", "F8..",
     "Ft7.", "Ft8.", "T7..", "T8..", "T9..", "T10.", "Tp7.", "Tp8.",
@@ -21,73 +26,93 @@ global_channels_names = [
 ]
 
 
-def get_dataloaders(config: dict) -> (DataLoader, DataLoader):
-    df_train = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[1, 2, 8, 9],
-                                   idx_exp=[3, 7, 11], path=DATA_PATH)
-    df_val = rd.read_all_file_df(channels_names=global_channels_names, idx_people=[10, 13],
-                                 idx_exp=[3, 7, 11], path=DATA_PATH)
+def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
+    """
+    Create PyTorch DataLoaders for training and validation datasets.
 
-    train_dataset = Dataset(
-        df=df_train, sequence_length=config["seq_length"]
+    Args:
+        config (dict): Configuration dictionary with parameters.
+
+    Returns:
+        tuple[DataLoader, DataLoader]: Training and validation DataLoaders.
+    """
+    df_train = read_all_file_df(
+        channels_names=GLOBAL_CHANNEL_NAMES,
+        idx_people=[1, 2, 8, 9],
+        idx_exp=[3, 7, 11],
+        path=DATA_PATH,
     )
-    val_dataset = Dataset(
-        df=df_val, sequence_length=config["seq_length"]
+    df_val = read_all_file_df(
+        channels_names=GLOBAL_CHANNEL_NAMES,
+        idx_people=[10, 13],
+        idx_exp=[3, 7, 11],
+        path=DATA_PATH,
     )
-    print(f"Train dataset size: {train_dataset[0][0].shape}")
-    train_dataloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
-    return train_dataloader, val_dataloader
+    train_dataset = Dataset(df=df_train, sequence_length=config["seq_length"])
+    val_dataset = Dataset(df=df_val, sequence_length=config["seq_length"])
+
+    train_loader = DataLoader(
+        train_dataset, batch_size=config["batch_size"], shuffle=True
+    )
+    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
+
+    return train_loader, val_loader
 
 
-def train_model(config):
+def train_model(config: dict) -> None:
+    """
+    Train the LSTM model using PyTorch Lightning.
+
+    Args:
+        config (dict): Configuration dictionary for model and training parameters.
+    """
     wandb.init(project="EEG_Classification_finale", reinit=True)
 
     train_loader, val_loader = get_dataloaders(config)
 
-   
-    model = LSTM_base_lighting(
+    model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
         hidden_size=config["hidden_size"],
         num_layers=config["num_layers"],
         dropout=config["dropout"],
         learning_rate=config["lr"],
         num_classes=config["num_classes"],
-        num_channels=len(global_channels_names)
+        num_channels=len(GLOBAL_CHANNEL_NAMES),
     )
 
-    
     wandb_logger = WandbLogger(project="EEG_Classification_finale")
 
     trainer = pl.Trainer(
-        max_epochs=10,
+        max_epochs=config["max_epochs"],
         logger=wandb_logger,
-        callbacks=[]
     )
 
     trainer.fit(model, train_loader, val_loader)
-
     wandb.finish()
 
 
-def bayesian_optimization():
+def optimize_hyperparameters() -> None:
+    """
+    Perform hyperparameter optimization using Ray Tune with OptunaSearch.
+    """
+    max_epochs = 100
+
     search_space = {
         "lr": tune.loguniform(1e-5, 1e-1),
         "batch_size": tune.choice([8, 16, 32, 64, 128]),
         "hidden_size": tune.lograndint(100, 10000),
         "num_layers": tune.randint(1, 4),
         "dropout": tune.uniform(0, 0.4),
-        # "input_size": tune.randint(8, 1600),
         "num_classes": 3,
         "seq_length": tune.randint(8, 800),
+        "max_epochs": max_epochs,
     }
-    optuna_search = OptunaSearch(
-        metric="val_acc",  
-        mode="max"  
-    )
+
+    optuna_search = OptunaSearch(metric="val_acc", mode="max")
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
-        max_t=10,
+        max_t=max_epochs,  # Use max_epochs here to ensure consistency
         grace_period=2,
         reduction_factor=2,
     )
@@ -107,4 +132,4 @@ def bayesian_optimization():
 
 
 if __name__ == "__main__":
-    bayesian_optimization()
+    optimize_hyperparameters()
