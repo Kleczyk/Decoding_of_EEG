@@ -8,13 +8,14 @@ from ray.tune.search.optuna import OptunaSearch
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 import wandb
+from sklearn.preprocessing import StandardScaler
+import pandas as pd
+import torch
 
 from data.read_data import read_all_file_df
 from data.dataset import Dataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
-
-
 
 # Define global channel names
 GLOBAL_CHANNEL_NAMES = [
@@ -27,27 +28,28 @@ GLOBAL_CHANNEL_NAMES = [
 
 
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
-    """
-    Create PyTorch DataLoaders for training and validation datasets.
+    def normalize_except_last_column(df: pd.DataFrame) -> pd.DataFrame:
+        scaler = StandardScaler()
+        features = df.iloc[:, :-1]
+        normalized_features = scaler.fit_transform(features)
+        df.iloc[:, :-1] = normalized_features
+        return df
 
-    Args:
-        config (dict): Configuration dictionary with parameters.
-
-    Returns:
-        tuple[DataLoader, DataLoader]: Training and validation DataLoaders.
-    """
     df_train = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
-        idx_exp=[3, 7, 11],
+        idx_exp=[3],
         path=DATA_PATH,
     )
+    df_train = normalize_except_last_column(df_train)
+
     df_val = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[10, 13],
-        idx_exp=[3, 7, 11],
+        idx_exp=[3],
         path=DATA_PATH,
     )
+    df_val = normalize_except_last_column(df_val)
 
     train_dataset = Dataset(df=df_train, sequence_length=config["seq_length"])
     val_dataset = Dataset(df=df_val, sequence_length=config["seq_length"])
@@ -60,14 +62,9 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     return train_loader, val_loader
 
 
-def train_model(config: dict) -> None:
-    """
-    Train the LSTM model using PyTorch Lightning.
-
-    Args:
-        config (dict): Configuration dictionary for model and training parameters.
-    """
-    wandb.init(project="EEG_Classification_finale", reinit=True)
+def train_model(config: dict) -> dict:
+    run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
+    wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
     train_loader, val_loader = get_dataloaders(config)
 
@@ -81,21 +78,22 @@ def train_model(config: dict) -> None:
         num_channels=len(GLOBAL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_finale")
+    wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
         logger=wandb_logger,
+        enable_checkpointing=True,
+        callbacks=[pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
     )
 
     trainer.fit(model, train_loader, val_loader)
     wandb.finish()
 
+    return {"model_path": "best_model/best_model.ckpt"}
+
 
 def optimize_hyperparameters() -> None:
-    """
-    Perform hyperparameter optimization using Ray Tune with OptunaSearch.
-    """
     max_epochs = 100
 
     search_space = {
@@ -107,12 +105,14 @@ def optimize_hyperparameters() -> None:
         "num_classes": 3,
         "seq_length": tune.randint(8, 800),
         "max_epochs": max_epochs,
+        "model_name": tune.choice(["LSTMBase"]),
+        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
     }
 
     optuna_search = OptunaSearch(metric="val_acc", mode="max")
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
-        max_t=max_epochs,  # Use max_epochs here to ensure consistency
+        max_t=max_epochs,
         grace_period=2,
         reduction_factor=2,
     )
@@ -125,10 +125,15 @@ def optimize_hyperparameters() -> None:
         num_samples=100,
         metric="val_acc",
         mode="max",
-        resources_per_trial={"cpu": 0.12, "gpu": 0.06},
+        resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
 
-    print("Best hyperparameters found:", analysis.best_config)
+    best_config = analysis.best_config
+    print("Best hyperparameters found:", best_config)
+
+    # Save best model path
+    best_model_path = train_model(best_config)["model_path"]
+    print(f"Best model saved at: {best_model_path}")
 
 
 if __name__ == "__main__":
