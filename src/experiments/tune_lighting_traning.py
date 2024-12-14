@@ -8,7 +8,6 @@ from ray.tune.search.optuna import OptunaSearch
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 import wandb
-from sklearn.preprocessing import StandardScaler
 
 from data.read_data import read_all_file_df
 from data.dataset import Dataset
@@ -37,41 +36,19 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     Returns:
         tuple[DataLoader, DataLoader]: Training and validation DataLoaders.
     """
-
-    def normalize_except_last_column(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Normalize all columns except the last one using Z-score normalization.
-
-        Args:
-            df (pd.DataFrame): Input DataFrame to normalize.
-
-        Returns:
-            pd.DataFrame: Normalized DataFrame.
-        """
-        scaler = StandardScaler()
-        features = df.iloc[:, :-1]  # All columns except the last one
-        normalized_features = scaler.fit_transform(features)
-        df.iloc[:, :-1] = normalized_features  # Replace with normalized values
-        return df
-
-    # Read and normalize data
     df_train = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
         idx_exp=[3, 7, 11],
         path=DATA_PATH,
     )
-    df_train = normalize_except_last_column(df_train)
-
     df_val = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[10, 13],
         idx_exp=[3, 7, 11],
         path=DATA_PATH,
     )
-    df_val = normalize_except_last_column(df_val)
 
-    # Create datasets and dataloaders
     train_dataset = Dataset(df=df_train, sequence_length=config["seq_length"])
     val_dataset = Dataset(df=df_val, sequence_length=config["seq_length"])
 
