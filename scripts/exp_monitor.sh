@@ -1,8 +1,8 @@
 #!/bin/bash
 
-EXPERIMENTS_FOLDER="/home/daniel/repos/Decoding_of_EEG/src/experiments" # Change to the path to the experiments folder
+EXPERIMENTS_FOLDER="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/src/experiments" # Change to the path to the experiments folder
 COMPLETED_FILE="completed_experiments.txt"
-SRC_PATH="/home/daniel/repos/Decoding_of_EEG/src" # Path to src, added to PYTHONPATH
+SRC_PATH="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/src" # Path to src, added to PYTHONPATH
 CHECK_INTERVAL=60 # Time in seconds between checks
 
 # Add SRC_PATH to PYTHONPATH
