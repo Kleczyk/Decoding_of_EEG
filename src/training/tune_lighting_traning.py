@@ -55,7 +55,7 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     df_train = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
-        idx_exp=[3, 7, 11],
+        idx_exp=[3],
         path=DATA_PATH,
     )
     df_train = normalize_except_last_column(df_train)
@@ -63,7 +63,7 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     df_val = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[10, 13],
-        idx_exp=[3, 7, 11],
+        idx_exp=[3],
         path=DATA_PATH,
     )
     df_val = normalize_except_last_column(df_val)
