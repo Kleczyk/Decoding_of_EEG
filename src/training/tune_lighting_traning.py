@@ -9,13 +9,12 @@ from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 import wandb
 from sklearn.preprocessing import StandardScaler
+import pandas as pd
 
 from data.read_data import read_all_file_df
 from data.dataset import Dataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
-
-
 
 # Define global channel names
 GLOBAL_CHANNEL_NAMES = [
@@ -25,7 +24,6 @@ GLOBAL_CHANNEL_NAMES = [
     "P7..", "P5..", "P3..", "P1..", "Pz..", "P2..", "P4..", "P6..", "P8..",
     "Po7.", "Po3.", "Poz.", "Po4.", "Po8.", "O1..", "Oz..", "O2..", "Iz..",
 ]
-
 
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     """
@@ -37,7 +35,6 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     Returns:
         tuple[DataLoader, DataLoader]: Training and validation DataLoaders.
     """
-
     def normalize_except_last_column(df: pd.DataFrame) -> pd.DataFrame:
         """
         Normalize all columns except the last one using Z-score normalization.
@@ -82,7 +79,6 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
 
     return train_loader, val_loader
 
-
 def train_model(config: dict) -> None:
     """
     Train the LSTM model using PyTorch Lightning.
@@ -90,7 +86,8 @@ def train_model(config: dict) -> None:
     Args:
         config (dict): Configuration dictionary for model and training parameters.
     """
-    wandb.init(project="EEG_Classification_finale", reinit=True)
+    run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
+    wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
     train_loader, val_loader = get_dataloaders(config)
 
@@ -104,7 +101,7 @@ def train_model(config: dict) -> None:
         num_channels=len(GLOBAL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_finale")
+    wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
@@ -113,7 +110,6 @@ def train_model(config: dict) -> None:
 
     trainer.fit(model, train_loader, val_loader)
     wandb.finish()
-
 
 def optimize_hyperparameters() -> None:
     """
@@ -130,6 +126,8 @@ def optimize_hyperparameters() -> None:
         "num_classes": 3,
         "seq_length": tune.randint(8, 800),
         "max_epochs": max_epochs,
+        "model_name": tune.choice(["LSTMBase"]),
+        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
     }
 
     optuna_search = OptunaSearch(metric="val_acc", mode="max")
@@ -152,7 +150,6 @@ def optimize_hyperparameters() -> None:
     )
 
     print("Best hyperparameters found:", analysis.best_config)
-
 
 if __name__ == "__main__":
     optimize_hyperparameters()
