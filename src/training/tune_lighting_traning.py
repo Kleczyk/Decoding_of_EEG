@@ -10,6 +10,7 @@ from lightning.pytorch.loggers import WandbLogger
 import wandb
 from sklearn.preprocessing import StandardScaler
 import pandas as pd
+import torch
 
 from data.read_data import read_all_file_df
 from data.dataset import Dataset
@@ -25,33 +26,15 @@ GLOBAL_CHANNEL_NAMES = [
     "Po7.", "Po3.", "Poz.", "Po4.", "Po8.", "O1..", "Oz..", "O2..", "Iz..",
 ]
 
+
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
-    """
-    Create PyTorch DataLoaders for training and validation datasets.
-
-    Args:
-        config (dict): Configuration dictionary with parameters.
-
-    Returns:
-        tuple[DataLoader, DataLoader]: Training and validation DataLoaders.
-    """
     def normalize_except_last_column(df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Normalize all columns except the last one using Z-score normalization.
-
-        Args:
-            df (pd.DataFrame): Input DataFrame to normalize.
-
-        Returns:
-            pd.DataFrame: Normalized DataFrame.
-        """
         scaler = StandardScaler()
-        features = df.iloc[:, :-1]  # All columns except the last one
+        features = df.iloc[:, :-1]
         normalized_features = scaler.fit_transform(features)
-        df.iloc[:, :-1] = normalized_features  # Replace with normalized values
+        df.iloc[:, :-1] = normalized_features
         return df
 
-    # Read and normalize data
     df_train = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
@@ -68,7 +51,6 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     )
     df_val = normalize_except_last_column(df_val)
 
-    # Create datasets and dataloaders
     train_dataset = Dataset(df=df_train, sequence_length=config["seq_length"])
     val_dataset = Dataset(df=df_val, sequence_length=config["seq_length"])
 
@@ -79,13 +61,8 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
 
     return train_loader, val_loader
 
-def train_model(config: dict) -> None:
-    """
-    Train the LSTM model using PyTorch Lightning.
 
-    Args:
-        config (dict): Configuration dictionary for model and training parameters.
-    """
+def train_model(config: dict) -> dict:
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
     wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
@@ -106,15 +83,17 @@ def train_model(config: dict) -> None:
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
         logger=wandb_logger,
+        enable_checkpointing=True,
+        callbacks=[pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
     )
 
     trainer.fit(model, train_loader, val_loader)
     wandb.finish()
 
+    return {"model_path": "best_model/best_model.ckpt"}
+
+
 def optimize_hyperparameters() -> None:
-    """
-    Perform hyperparameter optimization using Ray Tune with OptunaSearch.
-    """
     max_epochs = 100
 
     search_space = {
@@ -133,7 +112,7 @@ def optimize_hyperparameters() -> None:
     optuna_search = OptunaSearch(metric="val_acc", mode="max")
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
-        max_t=max_epochs,  # Use max_epochs here to ensure consistency
+        max_t=max_epochs,
         grace_period=2,
         reduction_factor=2,
     )
@@ -149,7 +128,13 @@ def optimize_hyperparameters() -> None:
         resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
 
-    print("Best hyperparameters found:", analysis.best_config)
+    best_config = analysis.best_config
+    print("Best hyperparameters found:", best_config)
+
+    # Save best model path
+    best_model_path = train_model(best_config)["model_path"]
+    print(f"Best model saved at: {best_model_path}")
+
 
 if __name__ == "__main__":
     optimize_hyperparameters()
