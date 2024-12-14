@@ -125,7 +125,7 @@ def optimize_hyperparameters() -> None:
         num_samples=100,
         metric="val_acc",
         mode="max",
-        resources_per_trial={"cpu": 0.25, "gpu": 0.120},
+        resources_per_trial={"cpu": 0.12, "gpu": 0.06},
     )
 
     print("Best hyperparameters found:", analysis.best_config)
