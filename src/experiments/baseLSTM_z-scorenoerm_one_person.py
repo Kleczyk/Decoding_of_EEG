@@ -63,7 +63,7 @@ def train_model(config: dict) -> dict:
     current_date = datetime.now().strftime("%Y-%m-%d")
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{current_date}_{wandb.util.generate_id()}"
     wandb.init(
-        project="EEG_Classification_finale",
+        project="EEG_Classification_on_LSTM",
         name=run_name,
         reinit=True,
         settings=wandb.Settings(start_method="fork")
