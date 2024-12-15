@@ -123,7 +123,7 @@ def optimize_hyperparameters() -> None:
         scheduler=scheduler,
         search_alg=optuna_search,
         num_samples=100,
-        metric="val_acc",
+        metric="val_accuracy",
         mode="max",
         resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
