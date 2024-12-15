@@ -82,7 +82,7 @@ def train_model(config: dict) -> dict:
         num_channels=len(GLOBAL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_test", name=run_name)
+    wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
