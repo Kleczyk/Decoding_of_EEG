@@ -54,7 +54,7 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     train_loader = DataLoader(
         train_dataset, batch_size=config["batch_size"], shuffle=True, num_workers=29
     )
-    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"],num_workers=29)
+    val_loader = DataLoader(val_dataset, batch_size=config["batch_size"], num_workers=29)
 
     return train_loader, val_loader
 
