@@ -21,15 +21,7 @@ from data.test_dataset import TestEEGDataset, get_test_dataloaders_via_dataset
 from data.dataset import Dataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
-
-# Define global channel names
-GLOBAL_CHANNEL_NAMES = [
-    "Fc5.", "Fc3.", "Fc1.", "Af3.", "Afz.", "Af4.", "Af8.",
-    "F7..", "F5..", "F3..", "F1..", "Fz..", "F2..", "F4..", "F6..", "F8..",
-    "Ft7.", "Ft8.", "T7..", "T8..", "T9..", "T10.", "Tp7.", "Tp8.",
-    "P7..", "P5..", "P3..", "P1..", "Pz..", "P2..", "P4..", "P6..", "P8..",
-    "Po7.", "Po3.", "Poz.", "Po4.", "Po8.", "O1..", "Oz..", "O2..", "Iz..",
-]
+from data.utils.all_channels_names import ALL_CHANNEL_NAMES
 
 
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
@@ -41,7 +33,7 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
         return df
 
     df_train = read_all_file_df(
-        channels_names=GLOBAL_CHANNEL_NAMES,
+        channels_names=ALL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
         idx_exp=[3],
         path=DATA_PATH,
@@ -49,7 +41,7 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     df_train = normalize_except_last_column(df_train)
 
     df_val = read_all_file_df(
-        channels_names=GLOBAL_CHANNEL_NAMES,
+        channels_names=ALL_CHANNEL_NAMES,
         idx_people=[10, 13],
         idx_exp=[3],
         path=DATA_PATH,
@@ -77,7 +69,7 @@ def train_model(config: dict) -> dict:
         settings=wandb.Settings(start_method="fork")
     )
 
-    train_loader, val_loader = get_test_dataloaders_via_dataset(config)
+    train_loader, val_loader = get_dataloaders(config)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
@@ -86,7 +78,7 @@ def train_model(config: dict) -> dict:
         dropout=config["dropout"],
         learning_rate=config["lr"],
         num_classes=config["num_classes"],
-        num_channels=len(GLOBAL_CHANNEL_NAMES),
+        num_channels=len(ALL_CHANNEL_NAMES),
     )
 
     wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
@@ -118,7 +110,6 @@ def train_model(config: dict) -> dict:
     finally:
         print(f"Run {run_name} completed or stopped.")
     return {"model_path": "best_model/best_model.ckpt"}
-
 
 
 def optimize_hyperparameters() -> None:

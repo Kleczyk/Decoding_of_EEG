@@ -1,0 +1,1 @@
+BASE_SRC = "~/repos/Decoding_of_EEG/src"
