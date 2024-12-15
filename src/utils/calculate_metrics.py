@@ -50,6 +50,6 @@ if __name__ == "__main__":
     ])
     y_example = torch.tensor([0, 1, 2, 2])
 
-    results = calculate_metrics(y_hat_example, y_example)
+    results = calculate_metrics(y_example, y_hat_example)
     for metric, value in results.items():
         print(f"{metric}: {value}")

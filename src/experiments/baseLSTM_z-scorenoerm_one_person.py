@@ -1,4 +1,5 @@
 import multiprocessing
+from datetime import datetime
 
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
 
@@ -67,10 +68,16 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
 
 
 def train_model(config: dict) -> dict:
-    run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
-    wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    run_name = f"{config['model_name']}_exp-{config['exp_type']}_{current_date}_{wandb.util.generate_id()}"
+    wandb.init(
+        project="EEG_Classification_finale",
+        name=run_name,
+        reinit=True,
+        settings=wandb.Settings(start_method="fork")
+    )
 
-    train_loader, val_loader = get_dataloaders(config)
+    train_loader, val_loader = get_test_dataloaders_via_dataset(config)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
@@ -89,14 +96,29 @@ def train_model(config: dict) -> dict:
         logger=wandb_logger,
         enable_checkpointing=True,
         callbacks=[
-            TuneReportCallback(),  # Report `val_auc` to Tune
-            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_auc", mode="max"),
-        ], )
+            TuneReportCallback(),  # Report `val_accuracy` to Tune
+            pl.callbacks.ModelCheckpoint(
+                dirpath="best_model",
+                filename="best_model",
+                monitor="val_accuracy",
+                mode="max",
+            ),
+        ],
+    )
 
-    trainer.fit(model, train_loader, val_loader)
-    wandb.finish()
-
+    try:
+        trainer.fit(model, train_loader, val_loader)
+    except KeyboardInterrupt:
+        # Log that the process was interrupted but do not close the run
+        wandb.alert(
+            title="Training Interrupted",
+            text=f"Run {run_name} was interrupted. Metrics up to this point are logged."
+        )
+        print(f"Training interrupted for run {run_name}.")
+    finally:
+        print(f"Run {run_name} completed or stopped.")
     return {"model_path": "best_model/best_model.ckpt"}
+
 
 
 def optimize_hyperparameters() -> None:
@@ -112,10 +134,10 @@ def optimize_hyperparameters() -> None:
         "seq_length": tune.randint(8, 800),
         "max_epochs": max_epochs,
         "model_name": tune.choice(["LSTMBase"]),
-        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
+        "exp_type": tune.choice(["motor_imagery"]),
     }
 
-    optuna_search = OptunaSearch(metric="val_auc", mode="max")
+    optuna_search = OptunaSearch(metric="val_accuracy", mode="max")
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
         max_t=max_epochs,
@@ -129,7 +151,7 @@ def optimize_hyperparameters() -> None:
         scheduler=scheduler,
         search_alg=optuna_search,
         num_samples=100,
-        metric="val_auc",
+        metric="val_accuracy",
         mode="max",
         resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
