@@ -62,6 +62,8 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     return train_loader, val_loader
 
 
+
+
 def train_model(config: dict) -> dict:
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
     wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
@@ -137,4 +139,18 @@ def optimize_hyperparameters() -> None:
 
 
 if __name__ == "__main__":
+    search_space = {
+        "lr": 1,
+        "batch_size": 3,
+        "hidden_size":3,
+        "num_layers": 3,
+        "dropout": 3,
+        "num_classes": 3,
+        "seq_length": 50,
+        "max_epochs": 3,
+        "model_name": tune.choice(["LSTMBase"]),
+        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
+    }
+    x = get_dataloaders(search_space)
+
     optimize_hyperparameters()

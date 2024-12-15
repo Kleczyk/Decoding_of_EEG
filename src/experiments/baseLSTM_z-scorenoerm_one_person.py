@@ -1,4 +1,7 @@
 import multiprocessing
+
+from ray.tune.integration.pytorch_lightning import TuneReportCallback
+
 multiprocessing.set_start_method('spawn')
 
 import lightning.pytorch as pl
@@ -13,6 +16,7 @@ import pandas as pd
 import torch
 
 from data.read_data import read_all_file_df
+from data.test_dataset import TestEEGDataset, get_test_dataloaders_via_dataset
 from data.dataset import Dataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
@@ -78,14 +82,16 @@ def train_model(config: dict) -> dict:
         num_channels=len(GLOBAL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
+    wandb_logger = WandbLogger(project="EEG_Classification_test", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
         logger=wandb_logger,
         enable_checkpointing=True,
-        callbacks=[pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
-    )
+        callbacks=[
+            TuneReportCallback(),  # Report `val_auc` to Tune
+            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_auc", mode="max"),
+        ], )
 
     trainer.fit(model, train_loader, val_loader)
     wandb.finish()
@@ -94,7 +100,7 @@ def train_model(config: dict) -> dict:
 
 
 def optimize_hyperparameters() -> None:
-    max_epochs = 100
+    max_epochs = 50
 
     search_space = {
         "lr": tune.loguniform(1e-5, 1e-1),
@@ -109,7 +115,7 @@ def optimize_hyperparameters() -> None:
         "exp_type": tune.choice(["motor_imagery", "rest_state"]),
     }
 
-    optuna_search = OptunaSearch(metric="val_acc", mode="max")
+    optuna_search = OptunaSearch(metric="val_auc", mode="max")
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
         max_t=max_epochs,
@@ -123,7 +129,7 @@ def optimize_hyperparameters() -> None:
         scheduler=scheduler,
         search_alg=optuna_search,
         num_samples=100,
-        metric="val_accuracy",
+        metric="val_auc",
         mode="max",
         resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
