@@ -1,4 +1,5 @@
 import multiprocessing
+
 multiprocessing.set_start_method('spawn')
 
 import lightning.pytorch as pl
@@ -8,12 +9,9 @@ from ray.tune.search.optuna import OptunaSearch
 from torch.utils.data import DataLoader
 from lightning.pytorch.loggers import WandbLogger
 import wandb
-from sklearn.preprocessing import StandardScaler
-import pandas as pd
-import torch
 
 from data.read_data import read_all_file_df
-from data.dataset import Dataset
+from data.base_eeg_dataset import BaseEEGDataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
 
@@ -28,31 +26,24 @@ GLOBAL_CHANNEL_NAMES = [
 
 
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
-    def normalize_except_last_column(df: pd.DataFrame) -> pd.DataFrame:
-        scaler = StandardScaler()
-        features = df.iloc[:, :-1]
-        normalized_features = scaler.fit_transform(features)
-        df.iloc[:, :-1] = normalized_features
-        return df
 
     df_train = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[1, 2, 8, 9],
         idx_exp=[3],
         path=DATA_PATH,
+        normalize_z_score=True
     )
-    df_train = normalize_except_last_column(df_train)
-
     df_val = read_all_file_df(
         channels_names=GLOBAL_CHANNEL_NAMES,
         idx_people=[10, 13],
         idx_exp=[3],
         path=DATA_PATH,
+        normalize_z_score=True
     )
-    df_val = normalize_except_last_column(df_val)
 
-    train_dataset = Dataset(df=df_train, sequence_length=config["seq_length"])
-    val_dataset = Dataset(df=df_val, sequence_length=config["seq_length"])
+    train_dataset = BaseEEGDataset(df=df_train, sequence_length=config["seq_length"])
+    val_dataset = BaseEEGDataset(df=df_val, sequence_length=config["seq_length"])
 
     train_loader = DataLoader(
         train_dataset, batch_size=config["batch_size"], shuffle=True
@@ -60,8 +51,6 @@ def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:
     val_loader = DataLoader(val_dataset, batch_size=config["batch_size"])
 
     return train_loader, val_loader
-
-
 
 
 def train_model(config: dict) -> dict:
@@ -86,7 +75,8 @@ def train_model(config: dict) -> dict:
         max_epochs=config["max_epochs"],
         logger=wandb_logger,
         enable_checkpointing=True,
-        callbacks=[pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
+        callbacks=[
+            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
     )
 
     trainer.fit(model, train_loader, val_loader)
@@ -142,7 +132,7 @@ if __name__ == "__main__":
     search_space = {
         "lr": 1,
         "batch_size": 3,
-        "hidden_size":3,
+        "hidden_size": 3,
         "num_layers": 3,
         "dropout": 3,
         "num_classes": 3,

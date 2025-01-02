@@ -3,76 +3,10 @@ import pandas as pd
 import mne
 from tqdm import tqdm
 import time
-
-global_channels_names = [
-    "Fc5.",
-    "Fc3.",
-    "Fc1.",
-    "Fcz.",
-    "Fc2.",
-    "Fc4.",
-    "Fc6.",
-    "C5..",
-    "C3..",
-    "C1..",
-    "Cz..",
-    "C2..",
-    "C4..",
-    "C6..",
-    "Cp5.",
-    "Cp3.",
-    "Cp1.",
-    "Cpz.",
-    "Cp2.",
-    "Cp4.",
-    "Cp6.",
-    "Fp1.",
-    "Fpz.",
-    "Fp2.",
-    "Af7.",
-    "Af3.",
-    "Afz.",
-    "Af4.",
-    "Af8.",
-    "F7..",
-    "F5..",
-    "F3..",
-    "F1..",
-    "Fz..",
-    "F2..",
-    "F4..",
-    "F6..",
-    "F8..",
-    "Ft7.",
-    "Ft8.",
-    "T7..",
-    "T8..",
-    "T9..",
-    "T10.",
-    "Tp7.",
-    "Tp8.",
-    "P7..",
-    "P5..",
-    "P3..",
-    "P1..",
-    "Pz..",
-    "P2..",
-    "P4..",
-    "P6..",
-    "P8..",
-    "Po7.",
-    "Po3.",
-    "Poz.",
-    "Po4.",
-    "Po8.",
-    "O1..",
-    "Oz..",
-    "O2..",
-    "Iz..",
-]
+from data.utils.all_channels_names import ALL_CHANNEL_NAMES
 
 
-def file_to_DataDrame(path, channels_names=global_channels_names):
+def file_to_DataDrame(path: str, channels_names: list[str] = ALL_CHANNEL_NAMES):
     """
     This function takes in a file path and returns a dataframe with the data and the target values
     format:
@@ -105,7 +39,7 @@ def file_to_DataDrame(path, channels_names=global_channels_names):
     counter = 0
     for timeVal in timeArray:
         if (
-            timeVal in annotations.onset
+                timeVal in annotations.onset
         ):  # if the time value is in the onset array, add the corresponding code to the codeArray
             counter += 1
         code_of_target = int(
@@ -118,8 +52,8 @@ def file_to_DataDrame(path, channels_names=global_channels_names):
 
 
 def read_all_file_df(
-    channels_names, idx_exp=[3, 4], idx_people=[1, 2], path="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw"
-):
+        channels_names: list[str], idx_exp: list[int] = [3, 4], idx_people: list[int] = [1, 2],
+        path="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw", normalize_z_score: bool = True ):
     """
     This function reads all the files in the path and returns a dataframe with the data and the target values
     format:
@@ -142,10 +76,8 @@ def read_all_file_df(
         for file in idx_exp:
             fileName = f"{path}/S{subject:03d}/S{subject:03d}R{file:02d}.edf"
             df = file_to_DataDrame(fileName, channels_names)
+            if normalize_z_score:
+                df.iloc[:, :-1] = (df.iloc[:, :-1] - df.iloc[:, :-1].mean()) / df.iloc[:, :-1].std()
             all_df = pd.concat([all_df, df], axis=0)
     end_time = time.time()
-
-    # Obliczanie czasu trwania
-    execution_time = end_time - start_time
-    print(f"Czas działania pętli: {execution_time:.2f} sekund")
     return all_df
