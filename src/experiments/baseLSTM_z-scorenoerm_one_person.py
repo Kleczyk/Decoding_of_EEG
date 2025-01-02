@@ -1,4 +1,5 @@
 import multiprocessing
+import sys
 from datetime import datetime
 
 from ray.tune.integration.pytorch_lightning import TuneReportCallback
@@ -18,7 +19,7 @@ import torch
 
 from data.read_data import read_all_file_df
 from data.test_dataset import TestEEGDataset, get_test_dataloaders_via_dataset
-from data.dataset import Dataset
+from data.base_eeg_dataset import Dataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
 from data.utils.all_channels_names import ALL_CHANNEL_NAMES
@@ -63,13 +64,17 @@ def train_model(config: dict) -> dict:
     current_date = datetime.now().strftime("%Y-%m-%d")
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{current_date}_{wandb.util.generate_id()}"
     wandb.init(
-        project="EEG_Classification_on_LSTM",
+        project="EEG_Classification_test",
         name=run_name,
         reinit=True,
         settings=wandb.Settings(start_method="fork")
     )
+    # Przekierowanie stdout i stderr do W&B
+    # Przekierowanie stdout i stderr do W&B
+    wandb.redirect_stdout()  # Przekierowuje stdout do zakładki Logs w W&B
+    wandb.redirect_stderr()  # Przekierowuje stderr do zakładki Logs w W&B
 
-    train_loader, val_loader = get_dataloaders(config)
+    train_loader, val_loader = get_test_dataloaders_via_dataset(config)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
@@ -81,7 +86,7 @@ def train_model(config: dict) -> dict:
         num_channels=len(ALL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_on_LSTM", name=run_name)
+    wandb_logger = WandbLogger(project="EEG_Classification_test", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
