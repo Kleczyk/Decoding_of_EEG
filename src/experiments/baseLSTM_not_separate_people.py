@@ -2,15 +2,14 @@ import multiprocessing
 from typing import Tuple
 
 import numpy as np
-from sympy.combinatorics import Subset
-
+import pandas as pd
 multiprocessing.set_start_method('spawn')
 
 import lightning.pytorch as pl
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
 from ray.tune.search.optuna import OptunaSearch
-from torch.utils.data import DataLoader, SubsetRandomSampler
+from torch.utils.data import DataLoader, SubsetRandomSampler, TensorDataset
 from lightning.pytorch.loggers import WandbLogger
 import wandb
 
@@ -62,7 +61,7 @@ def split_indices(dataset_length: int, seq_length: int, test_ratio: float = 0.2)
     return train_indices, test_indices
 
 
-def get_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader]:
+def get_dataloaders(config: dict, debug:bool =False) -> Tuple[DataLoader, DataLoader]:
     """
     Prepares training and testing DataLoaders for EEG sequential data.
 
@@ -75,25 +74,28 @@ def get_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader]:
     Returns:
         Tuple[DataLoader, DataLoader]: Training and testing DataLoaders.
     """
-    normalized_data = read_all_file_df(
-        channels_names=ALL_CHANNEL_NAMES,
-        idx_people=[1, 2, 8, 9],
-        idx_exp=[3],
-        path=DATA_PATH,
-        normalize_z_score=True
-    )
+    if debug:
+        seq_length = config["seq_length"] *10
+        num_channels = len(ALL_CHANNEL_NAMES)
+        num_columns = num_channels +1
+        data = np.random.rand(seq_length, num_columns)
+        column_names = [f'col_{i + 1}' for i in range(num_columns - 1)] + ['target']
+        normalized_data = pd.DataFrame(data, columns=column_names)
+
+    else:
+        normalized_data = read_all_file_df(
+            channels_names=ALL_CHANNEL_NAMES,
+            idx_people=[1, 2, 8, 9],
+            idx_exp=[3],
+            path=DATA_PATH,
+            normalize_min_max=True
+        )
 
     dataset = BaseEEGDataset(df=normalized_data, sequence_length=config["seq_length"])
-
-
-
-
-
     train_indices, test_indices = split_indices(len(dataset), config["seq_length"])
 
-
     train_Sampler = SubsetRandomSampler(train_indices)
-    test_Sampler= SubsetRandomSampler(test_indices)
+    test_Sampler = SubsetRandomSampler(test_indices)
     train_loader = DataLoader(
         dataset,
         sampler=train_Sampler,
@@ -104,17 +106,6 @@ def get_dataloaders(config: dict) -> Tuple[DataLoader, DataLoader]:
         sampler=test_Sampler,
         batch_size=config['batch_size'],
     )
-    if config.get("debug", False):
-        print("Train Batch Example:")
-        for batch in train_loader:
-            print(batch)
-            break
-
-        print("\nTest Batch Example:")
-        for batch in test_loader:
-            print(batch)
-            break
-
     return train_loader, test_loader
 
 
@@ -122,7 +113,7 @@ def train_model(config: dict) -> dict:
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
     wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
-    train_loader, val_loader = get_dataloaders(config)
+    train_loader, val_loader = get_dataloaders(config, debug=False)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
@@ -134,14 +125,14 @@ def train_model(config: dict) -> dict:
         num_channels=len(ALL_CHANNEL_NAMES),
     )
 
-    wandb_logger = WandbLogger(project="EEG_Classification_not_separate_person", name=run_name)
+    wandb_logger = WandbLogger(project="EEG_Classification_finale", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=config["max_epochs"],
         logger=wandb_logger,
         enable_checkpointing=True,
         callbacks=[
-            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor="val_acc", mode="max")]
+            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor=config["target_metric"], mode=config["mode_target_metric"])]
     )
 
     trainer.fit(model, train_loader, val_loader)
@@ -153,7 +144,7 @@ def train_model(config: dict) -> dict:
 def optimize_hyperparameters() -> None:
     max_epochs = 100
 
-    search_space = {
+    config_run = {
         "lr": tune.loguniform(1e-5, 1e-1),
         "batch_size": tune.choice([8, 16, 32, 64, 128]),
         "hidden_size": tune.lograndint(100, 10000),
@@ -163,10 +154,12 @@ def optimize_hyperparameters() -> None:
         "seq_length": tune.randint(8, 800),
         "max_epochs": max_epochs,
         "model_name": tune.choice(["LSTMBase"]),
-        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
+        "exp_type": "not_separate_people",
+        "target_metric": "val_accuracy",
+        "mode_target_metric": "max",
     }
 
-    optuna_search = OptunaSearch(metric="val_acc", mode="max")
+    optuna_search = OptunaSearch(metric=config_run["target_metric"], mode=config_run["mode_target_metric"])
     scheduler = ASHAScheduler(
         time_attr="training_iteration",
         max_t=max_epochs,
@@ -176,12 +169,12 @@ def optimize_hyperparameters() -> None:
 
     analysis = tune.run(
         train_model,
-        config=search_space,
+        config=config_run,
         scheduler=scheduler,
         search_alg=optuna_search,
         num_samples=100,
-        metric="val_acc",
-        mode="max",
+        metric=config_run["target_metric"],
+        mode=config_run["mode_target_metric"],
         resources_per_trial={"cpu": 0.25, "gpu": 0.12},
     )
 
@@ -204,8 +197,10 @@ if __name__ == "__main__":
         "seq_length": 50,
         "max_epochs": 3,
         "model_name": tune.choice(["LSTMBase"]),
-        "exp_type": tune.choice(["motor_imagery", "rest_state"]),
+        "exp_type": "not_separate_people",
+        "target_metric": "val_accuracy",
     }
-    x = get_dataloaders(search_space)
+    x = get_dataloaders(search_space, debug=True)
+
 
     optimize_hyperparameters()
