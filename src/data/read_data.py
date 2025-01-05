@@ -53,7 +53,7 @@ def file_to_DataDrame(path: str, channels_names: list[str] = ALL_CHANNEL_NAMES):
 
 def read_all_file_df(
         channels_names: list[str], idx_exp: list[int] = [3, 4], idx_people: list[int] = [1, 2],
-        path="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw", normalize_z_score: bool = True ):
+        path="/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw", normalize_min_max: bool = True ):
     """
     This function reads all the files in the path and returns a dataframe with the data and the target values
     format:
@@ -76,8 +76,7 @@ def read_all_file_df(
         for file in idx_exp:
             fileName = f"{path}/S{subject:03d}/S{subject:03d}R{file:02d}.edf"
             df = file_to_DataDrame(fileName, channels_names)
-            if normalize_z_score:
-                df.iloc[:, :-1] = (df.iloc[:, :-1] - df.iloc[:, :-1].mean()) / df.iloc[:, :-1].std()
+            if normalize_min_max:
+                df.iloc[:, :-1] = (df.iloc[:, :-1] - df.iloc[:, :-1].min()) / (df.iloc[:, :-1].max() - df.iloc[:, :-1].min())
             all_df = pd.concat([all_df, df], axis=0)
-    end_time = time.time()
     return all_df

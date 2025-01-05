@@ -3,7 +3,6 @@ ALL_CHANNEL_NAMES = [
     "Fc3.",
     "Fc1.",
     "Fcz.",
-
     "Fc2.",
     "Fc4.",
     "Fc6.",
