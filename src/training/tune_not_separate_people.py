@@ -113,7 +113,7 @@ def train_model(config: dict) -> dict:
     run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
     wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
-    train_loader, val_loader = get_dataloaders(config, debug=True)
+    train_loader, val_loader = get_dataloaders(config, debug=False)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
