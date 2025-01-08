@@ -142,7 +142,7 @@ def train_model(config: dict) -> dict:
 
 
 def optimize_hyperparameters() -> None:
-    max_epochs = 100
+    max_epochs = 30
 
     config_run = {
         "lr": tune.loguniform(1e-5, 1e-1),
