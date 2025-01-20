@@ -3,7 +3,6 @@ from .db_contlorer import DbController
 import numpy as np
 import matplotlib.pyplot as plt
 import pywt
-import datetime
 
 
 class DataHandler:

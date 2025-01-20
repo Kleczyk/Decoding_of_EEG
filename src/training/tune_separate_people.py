@@ -15,14 +15,6 @@ from data.base_eeg_dataset import BaseEEGDataset
 from models.base_lstm_lighting import LSTMBaseLighting
 from data import DATA_PATH
 
-# Define global channel names
-GLOBAL_CHANNEL_NAMES = [
-    "Fc5.", "Fc3.", "Fc1.", "Af3.", "Afz.", "Af4.", "Af8.",
-    "F7..", "F5..", "F3..", "F1..", "Fz..", "F2..", "F4..", "F6..", "F8..",
-    "Ft7.", "Ft8.", "T7..", "T8..", "T9..", "T10.", "Tp7.", "Tp8.",
-    "P7..", "P5..", "P3..", "P1..", "Pz..", "P2..", "P4..", "P6..", "P8..",
-    "Po7.", "Po3.", "Poz.", "Po4.", "Po8.", "O1..", "Oz..", "O2..", "Iz..",
-]
 
 
 def get_dataloaders(config: dict) -> tuple[DataLoader, DataLoader]:

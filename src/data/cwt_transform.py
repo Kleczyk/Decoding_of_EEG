@@ -1,15 +1,7 @@
 import polars as pl
 import numpy as np
-import mne
-from tqdm import tqdm
-import time
-import os
-import sys
 import pywt
 import matplotlib.pyplot as plt
-
-
-import data.read_data_polars as rdp
 
 
 class CwtTransform:

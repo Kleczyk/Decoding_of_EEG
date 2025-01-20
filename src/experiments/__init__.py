@@ -1,0 +1,1 @@
+BASE_EXP = f"/home/daniel/repos/Decoding_of_EEG/src/experiments"

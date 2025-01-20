@@ -1,1 +1,1 @@
-DATA_PATH = "/home/danielkleczykkleczynski/repos/Decoding_of_EEG/data/raw"
+DATA_PATH = "/home/daniel/repos/Decoding_of_EEG/data/raw"

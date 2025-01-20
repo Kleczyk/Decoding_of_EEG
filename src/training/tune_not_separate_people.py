@@ -3,6 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+
 multiprocessing.set_start_method('spawn')
 
 import lightning.pytorch as pl
@@ -61,7 +62,7 @@ def split_indices(dataset_length: int, seq_length: int, test_ratio: float = 0.2)
     return train_indices, test_indices
 
 
-def get_dataloaders(config: dict, debug:bool =False) -> Tuple[DataLoader, DataLoader]:
+def get_dataloaders(config: dict, debug: bool = False) -> Tuple[DataLoader, DataLoader]:
     """
     Prepares training and testing DataLoaders for EEG sequential data.
 
@@ -75,9 +76,9 @@ def get_dataloaders(config: dict, debug:bool =False) -> Tuple[DataLoader, DataLo
         Tuple[DataLoader, DataLoader]: Training and testing DataLoaders.
     """
     if debug:
-        seq_length = config["seq_length"] *10
+        seq_length = config["seq_length"] * 10
         num_channels = len(ALL_CHANNEL_NAMES)
-        num_columns = num_channels +1
+        num_columns = num_channels + 1
         data = np.random.rand(seq_length, num_columns)
         column_names = [f'col_{i + 1}' for i in range(num_columns - 1)] + ['target']
         normalized_data = pd.DataFrame(data, columns=column_names)
@@ -110,10 +111,10 @@ def get_dataloaders(config: dict, debug:bool =False) -> Tuple[DataLoader, DataLo
 
 
 def train_model(config: dict) -> dict:
-    run_name = f"{config['model_name']}_exp-{config['exp_type']}_{wandb.util.generate_id()}"
+    run_name = f"test_exp-test_{wandb.util.generate_id()}"
     wandb.init(project="EEG_Classification_finale", name=run_name, reinit=True)
 
-    train_loader, val_loader = get_dataloaders(config, debug=False)
+    train_loader, val_loader = get_dataloaders(config, debug=True)
 
     model = LSTMBaseLighting(
         sequence_length=config["seq_length"],
@@ -132,7 +133,8 @@ def train_model(config: dict) -> dict:
         logger=wandb_logger,
         enable_checkpointing=True,
         callbacks=[
-            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor=config["target_metric"], mode=config["mode_target_metric"])]
+            pl.callbacks.ModelCheckpoint(dirpath="best_model", filename="best_model", monitor=config["target_metric"],
+                                         mode=config["mode_target_metric"])]
     )
 
     trainer.fit(model, train_loader, val_loader)
@@ -175,7 +177,7 @@ def optimize_hyperparameters() -> None:
         num_samples=100,
         metric=config_run["target_metric"],
         mode=config_run["mode_target_metric"],
-        resources_per_trial={"cpu": 0.25, "gpu": 0.12},
+        resources_per_trial={"cpu": 1, "gpu": 1},
     )
 
     best_config = analysis.best_config
@@ -201,6 +203,5 @@ if __name__ == "__main__":
         "target_metric": "val_accuracy",
     }
     x = get_dataloaders(search_space, debug=True)
-
 
     optimize_hyperparameters()
