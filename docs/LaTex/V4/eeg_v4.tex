@@ -1,0 +1,50 @@
+\documentclass{article}
+
+\usepackage{weiiszablon}
+\usepackage{hyperref}
+\usepackage{mathastext}
+\usepackage{svg}
+\usepackage{csquotes}
+\usepackage{subfiles}
+\usepackage[backend=biber,style=numeric]{biblatex}
+
+\addbibresource{eeg_v4.bib} % Nazwa pliku .bib
+
+
+\author{Daniel Kleczyński 3AA/EF-DI}
+
+\studentID{EF-167802}
+
+\title{Wykorzystanie rekurencyjnych sieci neuronowych w
+dekodowaniu intencji ruchowych na podstawie sygnałów EEG}
+\titleEN{Temat pracy po angielsku}
+
+\newcommand{\rodzajPracyNo}{0}
+
+\supervisor{ prof. dr hab. inż. Jacek Kluska}
+\supervisorEN{(academic degree) Imię i nazwisko opiekuna}
+
+\abstract{Treść streszczenia po polsku}
+\abstractEN{Treść streszczenia po angielsku}
+
+\begin{document}
+    \maketitle
+    \blankpage
+    \tableofcontents
+    \clearpage
+    \blankpage
+    \subfile{sections/abstrakt.tex}
+    \subfile{sections/korelacja_ruchami_a_eeg.tex}
+    \subfile{sections/przeglad.tex}
+    \subfile{sections/dane.tex}
+    \subfile{sections/modele.tex}
+    \subfile{sections/exp1.tex}
+    \subfile{sections/exp2.tex}
+    \subfile{sections/podsumowanie.tex}
+
+    \clearpage
+    \blankpage
+
+    \printbibliography
+
+\end{document}
