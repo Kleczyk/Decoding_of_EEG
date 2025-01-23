@@ -1,0 +1,295 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+
+% Document
+\begin{document}
+
+
+    \section{Eksperyment dla nieodseparowanych osób w zbiorze testowym i treningowym}
+    \label{sec:exp_non_separated}
+    Celem przyświecającym temu eksperymentowi było jak największe uproszczenie analizy dla wybranego zbioru danych, co
+    umożliwiło szybkie i efektywne badanie działania modelu przy różnych konfiguracjach hiperparametrów. Eksperyment
+    miał również na celu zrozumienie, jak model zachowuje się w warunkach ograniczonej ilości danych i klas, aby w
+    przyszłości móc stopniowo zwiększać rozmiar zbioru treningowego, liczbę zadań oraz uczestników, co pozwoli na
+    bardziej kompleksową ocenę działania modelu.
+
+    \subsection{Wybór osób oraz zadania do eksperymentu}
+
+    Do eksperymentu wybrano osoby o numerach 1, 2, 8 oraz 9 z sposobem próbkowania okien o dowolnej długości (bez
+    nakładania) \ref{fig:non_overlapping}. Ograniczenie liczby uczestników było świadomą decyzją
+    mającą na celu redukcję danych, co z kolei pozwoliło na przyspieszenie procesu testowania różnych kombinacji
+    hiperparametrów. Eksperyment został zaprojektowany tak, aby skupić się na szybkim iteracyjnym badaniu przestrzeni
+    hiperparametrów oraz wstępnej ocenie skuteczności modelu w tym kontekście.
+
+    Wybrano zadanie numer 3, które polega na zaciskaniu lewej lub prawej pięści. Decyzja o wyborze tego zadania była
+    motywowana potrzebą dodatkowego uproszczenia eksperymentu, co pozwoliło na szybszą analizę działania modelu.
+    Rzeczywiste zaciskanie pięści generuje wyraźniejsze sygnały w danych EEG niż ruchy wyobrażone, dzięki czemu jest
+    bardziej czytelne i spójne dla modeli dekodujące dane encefalograficzne. Ponadto, wybór tego zadania opierał się
+    na jego lepszym zbadaniu w literaturze oraz potencjalnie wyższej jakości danych w porównaniu do bardziej złożonych
+    zadań.
+
+    Wybranie czterech osób oraz jednego zadania przełożyło się na 78 960 pojedynczych odczytów z 64 czujników EEG. Ta
+    liczba stanowi wystarczający zbiór do przeprowadzenia wstępnych eksperymentów z hiperparametrami, jednocześnie
+    pozostając na poziomie umożliwiającym szybkie iteracje.
+
+    Podsumowując, ograniczenie liczby uczestników i wybranie prostego zadania pozwoliło na szybkie iteracje w badaniu
+    hiperparametrów, jednocześnie tworząc solidną podstawę dla przyszłych eksperymentów z większą liczbą danych, klas
+    oraz zadań.
+
+    \subsection{Normalizacja danych}
+
+    Normalizacja danych została przeprowadzona w celu ujednolicenia skali odczytów EEG i poprawy zbieżności podczas
+    procesu uczenia modelu. Zastosowano metodę min-max, która przekształca wartości do zakresu $[0, 1]$
+    . Proces normalizacji został przeprowadzony oddzielnie dla każdego zadania i dla każdej osoby osobno. Oznacza to, że
+    dane każdej osoby były normalizowane niezależnie, co pozwoliło zachować specyfikę sygnałów pochodzących od różnych
+    uczestników eksperymentu.
+
+    Taka strategia normalizacji umożliwiła modelowi skuteczniejsze przetwarzanie danych o różnej skali i charakterystyce
+    , zwiększając spójność wyników w trakcie eksperymentu.
+
+    \subsection{Przestrzeń wyszukiwania hiperparametrów}
+
+    W celu zbadania optymalnych wartości hiperparametrów zdefiniowano przestrzeń wyszukiwania \ref{tab:hyperparameters}
+    obejmującą różne zakresy i
+    typy danych. Poniżej przedstawiono szczegóły w formie tabeli:
+
+    \begin{table}[h!]
+        \centering
+        \begin{tabular}{|c|c|c|}
+            \hline
+            \textbf{Hiperparametr}                 & \textbf{Typ danych} & \textbf{Zakres}                        \\
+            \hline
+            Wspóczynnik uczenia                    & Logarytmiczny       & $[1 \times 10^{-5}, 1 \times 10^{-1}]$ \\
+            \hline
+            Wielkość wsadu                         & Pojedyncze wybory   & $\{8, 16, 32, 64, 128\}$               \\
+            \hline
+            Rozmiar warstwy ukrytych (hidden size) & Logarytmiczny       & $[100, 10\ 000]$                       \\
+            \hline
+            Liczba warstw                          & Liniowy             & $[1, 4]$                               \\
+            \hline
+            Współczynnik wyłączania                & Liniowy             & $[0, 0.4]$                             \\
+            \hline
+            Długość sekwencji                      & Liniowy             & $[0, 800]$                             \\
+            \hline
+        \end{tabular}
+        \caption{Przestrzeń wyszukiwania hiperparametrów}
+        \label{tab:hyperparameters}
+    \end{table}
+
+    Do przeszukiwania przestrzeni hiperparametrów wykorzystano metodę \textit{grid search}
+    , co pozwoliło na systematyczne badanie wpływu poszczególnych parametrów na działanie modelu. Zakresy zostały
+    dobrane w celu zbalansowania szczegółowości i szerokości eksploracji przestrzeni hiperparametrów, uwzględniając
+    zarówno małe, jak i duże zmiany wpływające na wyniki.
+
+    \subsection{Konfiguracja modelu oraz procesu uczenia}
+
+    Proces uczenia modelu został skonfigurowany z wykorzystaniem hiperparametrów przedstawionych w tabeli
+    \ref{tab:hyperparameters}. Model składał się z warstwy \textit{LSTM}, do której wyjścia z ostatniej komórki (
+    \textit{cell}) były podłączone do w pełni połączonej warstwy wyjściowej (\textit{fully connected layer}
+    ). Architektura ta umożliwia przetwarzanie sekwencji danych i generowanie wyników klasyfikacji.
+
+    Szczegóły architektury:
+    \begin{itemize}
+        \item Warstwa LSTM: rozmiar warstwy ukrytej (\textit{hidden size}
+        ) był jednym z hiperparametrów definiujących model.
+        \item W pełni połączona warstwa: przyjmuje jako wejście wyjście z ostatniej komórki warstwy \textit{LSTM}
+        , a jej wymiar jest określony przez \textit{hidden size}
+        oraz liczbę klas, czyli 3 (zaciskanie lewej pięści, zaciskanie prawej pięści, stan spoczynku).
+    \end{itemize}
+
+    Do optymalizacji modelu zastosowano algorytm Adam (\textit{Adaptive Moment Estimation}) \cite{pytorch2025adam}
+    , opisany poniższymi wzorami:
+
+    \[
+        \begin{align*}
+            m_t &= \beta_1 m_{t-1} + (1 - \beta_1) g_t, \\
+            v_t &= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2, \\
+            \hat{m}_t &= \frac{m_t}{1 - \beta_1^t}, \\
+            \quad \hat{v}_t &= \frac{v_t}{1 - \beta_2^t}, \\
+            \theta_t &= \theta_{t-1} - \eta \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \epsilon}
+        \end{align*}
+    \]
+
+    gdzie:
+
+    \begin{description}
+        \item \( g_t \) – gradient funkcji straty względem parametrów w kroku \( t \),
+        \item \( m_t \) – estymacja średniej ruchomej gradientów w kroku \( t \),
+        \item \( v_t \) – estymacja średniej ruchomej kwadratów gradientów w kroku \( t \),
+        \item \( \beta_1 \) – współczynnik kontrolujący wpływ poprzednich wartości momentu pierwszego rzędu (domyślnie
+        \( \beta_1 = 0{,}9 \)),
+        \item \( \beta_2 \) – współczynnik kontrolujący wpływ poprzednich wartości momentu drugiego rzędu (domyślnie
+        \( \beta_2 = 0{,}999 \)),
+        \item \( \hat{m}_t \) – skorygowana estymacja średniej ruchomej gradientów w kroku \( t \),
+        \item \( \hat{v}_t \) – skorygowana estymacja średniej ruchomej kwadratów gradientów w kroku \( t \),
+        \item \( \eta \) – współczynnik uczenia (\textit{learning rate}),
+        \item \( \epsilon \) – mała stała zapobiegająca dzieleniu przez zero (domyślnie \( \epsilon = 10^{-8} \)),
+        \item \( \theta_t \) – aktualne wartości parametrów modelu w kroku \( t \),
+        \item \( \theta_{t-1} \) – wartości parametrów modelu w poprzednim kroku (\( t-1 \)).
+    \end{description}
+
+    Jako funkcję straty zastosowano funkcję krzyżowej entropii (\textit{Cross-Entropy Loss})
+    \cite{pytorch2025crossentropy}, definiowaną jako:
+
+    \[
+        \mathcal{L} = -\frac{1}{N} \sum_{i=1}^{N} \sum_{j=1}^{C} y_{ij} \cdot \log (\hat{y}_{ij})
+    \]
+
+    gdzie:
+
+    \begin{description}
+        \item \( N \) – liczba próbek w zbiorze danych,
+        \item \( C \) – liczba klas,
+        \item \( y_{ij} \) – rzeczywista etykieta dla próbki \( i \) i klasy \( j \) (wartość binarna: 0 lub 1),
+        \item \( \hat{y}_{ij} \) – przewidywane prawdopodobieństwo dla próbki \( i \) i klasy \( j \).
+    \end{description}
+
+    Powyższa konfiguracja modelu i procesu uczenia zapewniała stabilność trenowania oraz możliwość efektywnego
+    testowania różnych kombinacji hiperparametrów.
+
+    Taka konfiguracja modelu, oparta na warstwie \textit{LSTM}
+    i w pełni połączonej warstwie wyjściowej, zapewnia zdolność do analizy sekwencji danych EEG oraz dokładnej
+    klasyfikacji wyników.
+
+    \subsection{Struktura modelu}
+    Model składał się z jednej warstwy \textit{LSTM} o 128 ukrytych jednostkach (\textit{hidden size}
+    ). Wyjścia z warstwy \textit{LSTM} były przekazywane do w pełni połączonej warstwy (\textit{fully connected layer}
+    ) z liczbą neuronów równą liczbie klas (2 klasy: otwieranie i zamykanie pięści). Do modelu zaimplementowano
+    mechanizm regularizacji w postaci warstwy \textit{dropout} z prawdopodobieństwem $p=0.5$.
+
+    \subsection{Wyniki eksperymentu}
+
+    W ramach eksperymentu przeprowadzono 100 prób, z których każda testowała różne kombinacje hiperparametrów,
+    zdefiniowane w tabeli \ref{tab:hyperparameters}
+    . Eksperymenty zostały wykonane przy użyciu optymalizacji hiperparametrów za pomocą narzędzia \textit{Optuna}
+    , co umożliwiło efektywne przeszukiwanie przestrzeni parametrów i identyfikację najlepszych konfiguracji dla modelu.
+
+    Dalsze wyniki eksperymentów, w celu poprawy czytelności, są przedstawiane na wykresach obejmujących najlepszą próbę,
+    drugą najlepszą próbę, średni wynik oraz najgorszy wynik. Taka selekcja pozwala na dokładniejsze zrozumienie wpływu
+    hiperparametrów na poszczególne metryki.
+
+    \subsubsection{Dokładność (\textit{Accuracy})}
+    Najlepsza próba osiągnęła wartość dokładności na poziomie \(0.98331\)
+    , co wskazuje na bardzo wysoką skuteczność modelu w klasyfikacji danych (rys. \ref{fig:accuracy}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_acc}
+        \caption{Wyniki dokładności (\textit{Accuracy}) dla czterech wybranych prób}
+        \label{fig:accuracy}
+    \end{figure}
+
+    \subsubsection{Pole pod krzywą ROC (\textit{AUC})}
+    Najlepsza próba osiągnęła wartość \textit{AUC} na poziomie \(0.99915\)
+    , co potwierdza zdolność modelu do doskonałego rozróżniania klas pozytywnych i negatywnych (rys. \ref{fig:auc}).
+
+    Należy jednak zauważyć, że implementacja \textit{AUC}
+    prawdopodobnie zawierała błędy, ponieważ w niektórych przypadkach metryka ta nie zwracała wartości. Na wykresie
+    można to zaobserwować jako brakujące dane, co wymaga dalszej analizy oraz potencjalnej poprawy obliczeń tej metryki.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_auc}
+        \caption{Pole pod krzywą ROC (\textit{AUC}) dla czterech wybranych prób}
+        \label{fig:auc}
+    \end{figure}
+
+    \subsubsection{Miara F1 (\textit{F1 Score})}
+    Miara F1 w najlepszej próbie osiągnęła wartość \(0.98326\%\)
+    , co świadczy o znakomitym zbalansowaniu precyzji i czułości (rys. \ref{fig:f1}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_f1_score}
+        \caption{Miara F1 (\textit{F1 Score}) dla czterech wybranych prób}
+        \label{fig:f1}
+    \end{figure}
+
+    \subsubsection{Strata (\textit{Loss})}
+    Najniższa strata w najlepszej próbie wyniosła \(0,04264\%\)
+    , co oznacza bardzo dobre dopasowanie modelu do danych (rys. \ref{fig:loss}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_loss}
+        \caption{Strata (\textit{Loss}) dla czterech wybranych prób}
+        \label{fig:loss}
+    \end{figure}
+
+    \subsubsection{Precyzja (\textit{Precision})}
+    Precyzja w najlepszej próbie wyniosła \(0.98488\%\)
+    , co wskazuje na skuteczność modelu w unikaniu fałszywych pozytywów (rys. \ref{fig:precision}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_precision}
+        \caption{Precyzja (\textit{Precision}) dla czterech wybranych prób}
+        \label{fig:precision}
+    \end{figure}
+
+    \subsubsection{Czułość (\textit{Recall})}
+    Czułość modelu w najlepszej próbie wyniosła \(0.98328\%\)
+    , co potwierdza jego zdolność do wykrywania większości pozytywnych przypadków (rys. \ref{fig:recall}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/test_recall}
+        \caption{Czułość (\textit{Recall}) dla czterech wybranych prób}
+        \label{fig:recall}
+    \end{figure}
+
+    \subsubsection{Podsumowanie najlepszej konfiguracji hiperparametrów}
+    Najlepsza konfiguracja hiperparametrów, wybrana na podstawie najwyższej wartości pola pod krzywą ROC (\textit{AUC}
+    ), została przedstawiona w tabeli \ref{tab:best_params}.
+
+    \begin{table}[h!]
+        \centering
+        \begin{tabular}{|c|c|}
+            \hline
+            \textbf{Hiperparametr}                & \textbf{Wartość} \\ \hline
+            Learning rate                         & \(3.872e-4\)     \\ \hline
+            Batch size                            & \(32\)           \\ \hline
+            Rozmiar warstw ukrytych (hidden size) & \(233\)          \\ \hline
+            Liczba warstw                         & \(3\)            \\ \hline
+            Dropout                               & \(0.3773\)       \\ \hline
+            Długość sekwencji                     & \(457\)          \\ \hline
+        \end{tabular}
+        \caption{Najlepsza konfiguracja hiperparametrów}
+        \label{tab:best_params}
+    \end{table}
+
+    \subsubsection{Analiza korelacji hiperparametrów z dokładnością}
+    Dla lepszego zrozumienia wpływu hiperparametrów na dokładność (\textit{test\_accuracy}), na rysunku
+    \ref{fig:parallel_plot}
+    przedstawiono wykres typu parallel plot, który pokazuje zależności między wartościami hiperparametrów a wynikami
+    modelu.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/perrl}
+        \caption{Korelacje hiperparametrów z dokładnością na wykresie typu \textit{(parallel plot)}}
+        \label{fig:parallel_plot}
+    \end{figure}
+
+    \subsection{Podsumowanie}
+
+    W ramach pierwszego eksperymentu osiągnięto dokładność na poziomie \(98\%\) oraz pole pod krzywą ROC (\textit{AUC}
+    ) na poziomie \(99\%\)
+    , co można uznać za bardzo zadowalający wynik. Wyniki te pokazują potencjał zastosowanego podejścia oraz użytego
+    zbioru danych do dalszych badań.
+
+    Niestety, należy zauważyć, że wynik może być niemiarodajny ze względu na ograniczoną liczbę próbek. Ponadto, zbiór
+    testowy i walidacyjny zawierają dane pochodzące od tych samych osób, co, mimo rozdzielenia próbek, oznacza, że model
+    nie został w pełni przetestowany pod kątem uniwersalności dla każdej osoby. W obecnej formie eksperyment nie tworzy
+    modelu potencjalnie uniwersalnego, zdolnego do generalizacji dla nowych uczestników.
+
+    Wyniki te sugerują konieczność dalszych badań, w szczególności zwiększenia liczby próbek w zbiorze treningowym oraz
+    testowym, a także uwzględnienia osób, które nie występują w zbiorze treningowym. Takie działania pozwolą na lepszą
+    ocenę możliwości uogólniania modelu oraz dokładniejsze zrozumienie jego potencjału w kontekście bardziej
+    zróżnicowanych danych.
+
+\end{document}

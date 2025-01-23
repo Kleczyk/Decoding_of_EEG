@@ -1,0 +1,542 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+
+% Document
+\begin{document}
+    \section{Analiza zbioru danych}
+
+    Prezentowany zbiór danych EEG składa się z ponad 1500 jedno- i dwuminutowych nagrań, zebranych od 109 ochotników.
+    Dane zostały zarejestrowane przy użyciu 64-kanałowego EEG zgodnie z systemem 10-10 wizualizacja rozkaładu \ref{fig:sensors} , wykorzystując system BCI2000.
+    Uczestnicy wykonywali różne zadania motoryczne oraz ich wyobrażenia, takie jak otwieranie i zamykanie lewej lub
+    prawej pięści, obu pięści czy obu stóp.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/sensors.png}
+        \caption{Rozkład na głowie oraz nazwy sensorów EEG.}
+        \label{fig:sensors}
+    \end{figure}
+
+    \subsection{Opis klas i ich ilość}
+
+    Zbiór danych zawiera trzy główne klasy oznaczone jako $T0$, $T1$ i $T2$:
+
+    \textbf{$T0$ (Stan spoczynku)}
+    Odpowiada momentom, w których uczestnik jest w stanie relaksu, nie wykonuje żadnego ruchu ani nie wyobraża sobie
+    jego wykonania.
+
+    \textbf{$T1$ (Ruch lub wyobrażenie ruchu lewej pięści lub obu pięści)}
+    \begin{itemize}
+        \item Pomiary 3, 7, 11: Fizyczne otwarcie i zaciśnięcie lewej pięści.
+        \item Pomiary 4, 8, 12: Wyobrażenie otwarcia i zaciśnięcia lewej pięści.
+        \item Pomiary 5, 9, 13: Fizyczne otwarcie i skurczenie obydwóch stóp.
+        \item Pomiary 6, 10, 14: Wyobrażenie otwarcia i skurczenia obydwóch stóp.
+    \end{itemize}
+
+    \textbf{$T2$ (Ruch lub wyobrażenie ruchu prawej pięści lub obu stóp)}
+    \begin{itemize}
+        \item Pomiary 3, 7, 11: Fizyczne otwarcie i zaciśnięcie prawej pięści.
+        \item Pomiary 4, 8, 12: Wyobrażenie otwarcia i zaciśnięcia prawej pięści.
+        \item Pomiary 5, 9, 13: Fizyczne otwarcie i zaciśnięcie obydwóch dłoni.
+        \item Pomiary 6, 10, 14: Wyobrażenie otwarcia i zaciśnięcia obydwóch dłoni.
+    \end{itemize}
+
+
+    Klasy $T0$, $T1$, $T2$
+    są definiowane różnie w zależności od numeru zadania. Poniżej przedstawiono warunki zadań oraz odpowiadające im
+    numery pomiarów:
+
+    \begin{enumerate}
+        \item \textbf{Pomiar referencyjny, otwarte oczy}
+        \item \textbf{Pomiar referencyjny, zamknięte oczy}
+        \item \textbf{Zadanie 1} (otwieranie i zamykanie lewej lub prawej pięści)
+        \item \textbf{Zadanie 2} (wyobrażenie otwierania i zamykania lewej lub prawej pięści)
+        \item \textbf{Zadanie 3} (otwieranie i zamykanie obu pięści lub obu stóp)
+        \item \textbf{Zadanie 4} (wyobrażenie otwierania i zamykania obu pięści lub obu stóp)
+        \item \textbf{Zadanie 1}
+        \item \textbf{Zadanie 2}
+        \item \textbf{Zadanie 3}
+        \item \textbf{Zadanie 4}
+        \item \textbf{Zadanie 1}
+        \item \textbf{Zadanie 2}
+        \item \textbf{Zadanie 3}
+        \item \textbf{Zadanie 4}
+    \end{enumerate}
+
+    Aby uprościć problem klasyfikacji oraz zgodnie z dobrymi praktykami rozpocząć od prostszego przypadku, zdecydowano
+    się początkowo skupić na klasyfikacji trzech klas z zadania nr 1. Analizę przeprowadzono na danych pochodzących
+    od 10 losowo wybranych osób o indeksach: {1, 2, 8, 9, 10, 13}. Takie podejście pozwala na opracowanie możliwie
+    najlepszego modelu w ramach ograniczonego zakresu danych, który można następnie udoskonalać i rozszerzać na bardziej
+    złożone przypadki oraz większe zbiory danych.
+
+    \subsection{Charakterystyka sygnałów EEG}
+
+    Sygnały EEG (elektroencefalograficzne) rejestrują aktywność elektryczną mózgu, charakteryzującą się niskimi
+    amplitudami (rzędu mikrowoltów) oraz wysoką złożonością wynikającą z różnorodności stanów funkcjonalnych mózgu,
+    takich jak czuwanie, sen czy aktywność poznawcza. Aktywność ta nie ogranicza się do jednego obszaru mózgu, lecz
+    obejmuje różne regiony, które są aktywowane w różnym czasie i na różne sposoby. Utrudnia to jednoznaczne określenie,
+    czy dany stan aktywności mózgu odpowiada konkretnej czynności.
+
+    W celu przedstawienia charakterystyki sygnałów EEG wybrano kanał \textit{FCz}
+    , ponieważ jego lokalizacja obejmuje obszar pierwotnej kory ruchowej (M1), która odpowiada m.in. za kontrolę ruchów
+    kończyn \cite{Silva2020}
+    . Należy jednak pamiętać, że jeden sensor nie jest w stanie w pełni odwzorować aktywności danego obszaru mózgu, co
+    implikuje konieczność analizy danych z wielu sensorów jednocześnie, przez określony czas. Przykładowy zapis sygnału
+    EEG o długości 20 sekund z sensora \textit{FCz} przedstawiono na Rysunku~\ref{fig:eeg_signal}. Sensor \textit{FCz}
+    znajduje się w przedniej części linii środkowej głowy (litera \textit{F} – Frontal, \textit{C} – Central, \textit{z}
+    – Zero Line) i w systemie rozmieszczenia elektrod 10-10 jest zlokalizowany najbardziej na środku obszaru pierwotnej
+    kory ruchowej (M1). Jest on często wykorzystywany do monitorowania aktywności związanej z planowaniem ruchu oraz
+    procesami poznawczymi. Widoczne są w nim fluktuacje o nieregularnym charakterze, typowe dla sygnału EEG.
+
+
+    Dla porównania, sygnał EKG (elektrokardiograficzny) zaprezentowany na Rysunku~\ref{fig:ecg_signal}
+    charakteryzuje się wyższymi amplitudami (rzędu miliwoltów) oraz wyraźną okresowością, która odzwierciedla cykl pracy
+    serca. Podczas gdy sygnały EEG zawierają informacje o procesach neurofizjologicznych, sygnały EKG są bezpośrednio
+    związane z mechaniką pracy mięśnia sercowego. Z tego względu sygnały EEG należą do najbardziej złożonych sygnałów
+    biologicznych, co czyni ich analizę niezwykle trudnym zadaniem.
+
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/eeg_signal.png}
+        \caption
+        {Przykładowy sygnał EEG z kanału \textit{FCz} rejestrowany przez 20 sekund. z wydzielonymi klasami 0, 1, 2.}
+        \label{fig:eeg_signal}
+    \end{figure}
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/ekg_signal}
+        \caption{Przykładowy sygnał ECG rejestrowany przez 20 sekund z z częstotliwością próbkowania 160 hz. przy użyciu
+        bibloteki python neurokit2}
+        \label{fig:ecg_signal}
+    \end{figure}
+
+    \subsection{Metryki statystyczne danych}
+    \begin{table}[h]
+        \centering
+        \caption
+        {Metryki statystyczne dla sygnału EEG z kanału \textit{FCz} (wartości w $\mu$V) oraz dla poszczególnych klas.}
+        \label{tab:metrics}
+        \begin{tabular}{|l|c|c|c|c|}
+            \hline
+            \textbf{Metryka} & \textbf{Cały sygnał} & \textbf{Klasa T0} & \textbf{Klasa T1} &
+            \textbf{Klasa T2} \\
+            \hline
+            Liczba próbek                  & 118320   & 59280    & 30832     & 28208    \\
+            \hline
+            Maksimum                       & 390.0    & 390.0    & 376.0     & 359.0    \\
+            \hline
+            Minimum                        & -338.0   & -338.0   & -304.0    & -278.0   \\
+            \hline
+            Amplituda                      & 728.0    & 728.0    & 680.0     & 637.0    \\
+            \hline
+            Mediana                        & -4.0     & -5.0     & -1.0      & -5.0     \\
+            \hline
+            Maksimum wartości bezwzględnej & 390.0    & 390.0    & 376.0     & 359.0    \\
+            \hline
+            Średnia                        & -3.5714  & -5.2485  & 2.7959    & -7.0066  \\
+            \hline
+            Średnia wartości bezwzględnych & 45.1493  & 45.5618  & 45.1973   & 44.2300  \\
+            \hline
+            Wariancja                      & 4083.02  & 4134.47  & 4177.00   & 3810.15  \\
+            \hline
+            Odchylenie standardowe         & 63.8985  & 64.2999  & 64.6297   & 61.7264  \\
+            \hline
+            Energia                        & 484.6e6  & 246.7e6  & 129.0e6   & 108.9e6  \\
+            \hline
+            Energia sygnału wycentrowanego & 483.1e6  & 245.1e6  & 128.8e6   & 107.5e6  \\
+            \hline
+            Kurtoza                        & 2.6358   & 2.6572   & 2.7884    & 2.2596   \\
+            \hline
+            Skośność                       & 0.3120   & 0.2355   & 0.5454    & 0.1892   \\
+            \hline
+            Moment 5. rzędu                & 6452.7e6 & 5414.8e6 & 10084.6e6 & 4081.3e6 \\
+            \hline
+            Moment 6. rzędu                & 4290.7e9 & 4545.4e9 & 4760.0e9  & 2930.3e9 \\
+            \hline
+            Moment 7. rzędu                & 530.5e12 & 479.4e12 & 762.7e12  & 323.0e12 \\
+            \hline
+            Moment 8. rzędu                & 2.79e17  & 3.06e17  & 3.11e17   & 1.62e17  \\
+            \hline
+            Moment 9. rzędu                & 4.89e19  & 4.77e19  & 6.50e19   & 2.76e19  \\
+            \hline
+            Moment 10. rzędu               & 2.26e22  & 2.57e22  & 2.46e22   & 1.14e22  \\
+            \hline
+            Entropia Shannona              & 10.5300  & 9.8431   & 9.1462    & 9.1351   \\
+            \hline
+        \end{tabular}
+    \end{table}
+
+
+    Zestawienie metryk statystycznych \ref{tab:metrics}
+    pozwala wstępnie zinterpretować różnice w aktywności EEG pomiędzy stanem
+    spoczynku klasa T0 a dwoma klasami ruchu 1 i 2. W kontekście dekodowania ruchów z sygnału EEG warto zwrócić uwagę
+    na kilka aspektów:
+
+    \begin{itemize}
+        \item \textbf{Średnia i mediana}
+        \begin{itemize}
+            \item Dla stanu spoczynku klasa T0 średnia wartość sygnału jest ujemna ok. \(-5.25\,\mu\mathrm{V}\)
+            , a mediana również \(-5\,\mu\mathrm{V}\)
+            . Wskazuje to, że potencjał w tej klasie zwykle utrzymuje się poniżej zera.
+            \item W klasie T1 średnia jest dodatnia \(2.80\,\mu\mathrm{V}\), a mediana bliska zeru
+            \(-1\,\mu\mathrm{V}\), co sugeruje częstsze wychylenia w kierunku wartości dodatnich.
+            \item W klasie T2 średnia jest najbardziej ujemna \(-7.01\,\mu\mathrm{V}\)
+            , a mediana wynosi \(-5\,\mu\mathrm{V}\), czyli wyraźnie utrzymuje się w dolnym zakresie rozkładu.
+        \end{itemize}
+
+        \item \textbf{Amplituda, wariancja i odchylenie standardowe}
+        \begin{itemize}
+            \item Największą amplitudę, czyli różnicę między maksimum a minimum, obserwujemy w klasie T0
+            \(728\,\mu\mathrm{V}\) – czyli w stanie spoczynku. Klasy ruchowe mają nieco mniejszy rozrzut klasa T1:
+            \(680\,\mu\mathrm{V}\), klasa T2: \(637\,\mu\mathrm{V}\).
+            \item Wariancja i odchylenie standardowe są najwyższe dla klasy T1 odpowiednio \(4177\,\mu\mathrm{V}^2\) i
+            \(64.63\,\mu\mathrm{V}\), a najniższe dla klasy T2 \(3810\,\mu\mathrm{V}^2\) i \(61.73\,\mu\mathrm{V}\)
+            . Klasa T0 plasuje się między nimi \(4134.47\,\mu\mathrm{V}^2\) oraz \(64.30\,\mu\mathrm{V}\).
+        \end{itemize}
+
+        \item \textbf{Energia sygnału i energia wycentrowana}
+        \begin{itemize}
+            \item Największa energia całkowita i wycentrowana przypada na stan spoczynku klasa T0. Może to wskazywać na
+            silną składową rytmów tła, takich jak rytm alfa lub beta.
+            \item
+            Klasy ruchowe T1 i T2 mają wyraźnie mniejszą energię całkowitą, co sugeruje krótsze epizody sygnału
+            o większej amplitudzie lub inną charakterystykę częstotliwościową.
+        \end{itemize}
+
+        \item \textbf{Kurtoza i skośność}
+        \begin{itemize}
+            \itemWszystkie klasy mają kurtozę poniżej 3, co oznacza, że rozkłady są raczej „spłaszczone” w porównaniu do
+            rozkładu normalnego.
+            \item Skośność jest dodatnia dla wszystkich klas, ale najwyższa dla klasy T1 \(0.5454\)
+            , co sugeruje, że rozkład próbek sygnału w ruchu klasa T1 ma wydłużony „ogon” w kierunku wartości
+            dodatnich.
+        \end{itemize}
+
+        \item \textbf{Entropia Shannona}
+        \begin{itemize}
+            \item Najwyższą entropię wykazuje stan spoczynku klasa T0 \(9.8431\)
+            , co może wskazywać na większą różnorodność rytmów i potencjałów.
+            \item Klasy T1 i T2 mają niższe wartości entropii \(~9.15\)
+            , co może świadczyć o bardziej specyficznej aktywności związanej z planowaniem/wykonywaniem ruchu.
+        \end{itemize}
+
+        \item \textbf{Implikacje dla dekodowania EEG}
+        \begin{itemize}
+            \item
+            Różnice w średniej, rozkładach skośność i kurtoza, a także w zmienności sygnału wariancja, odchylenie
+            standardowe sugerują, że poszczególne stany spoczynek vs. różne typy ruchu mogą mieć rozróżnialne cechy w
+            dziedzinie czasowej.
+            \item
+            Entropia i momenty wyższych rzędów mogą pomóc w klasyfikacji, umożliwiając rozróżnienie klas przez algorytmy
+            uczenia maszynowego.
+        \end{itemize}
+    \end{itemize}
+
+    Podsumowując, metryki statystyczne wskazują, że sygnał w stanie spoczynku może być bardziej „rozproszony” i złożony
+    wyższa entropia, największa amplituda, natomiast w klasach ruchu 1 i 2 zaobserwować można różnice w średniej,
+    odchyleniu standardowym czy skośności. Analiza tych parametrów jest przydatna w projektowaniu algorytmów
+    dekodujących intencję ruchu z sygnałów EEG.
+
+
+%    \section{Infrastruktura Obliczeniowa i Środowisko Programistyczne}
+%
+%    \subsection{Specyfikacja sprzętu}
+%    \begin{table}[h!]
+%        \centering
+%        \caption{Specyfikacja serwera i laptopa używanego w projekcie}
+%        \label{tab:specyfikacja_sprzetu}
+%        \resizebox{\columnwidth}{!}{%
+%            \begin{tabular}{|l|l|}
+%                \hline
+%                \textbf{Komponent} & \textbf{Serwer}                                 \\ \hline
+%                Procesor           & 32 x Intel Xeon Gold 6234 @ 3.30GHz (2 gniazda) \\
+%                Pamięć RAM         & 256 GB                                          \\
+%                Dysk SSD NVMe      & 1 TB                                            \\
+%                Karta graficzna    & NVIDIA RTX 8000 (48 GB VRAM)                    \\
+%                Dyski HDD          & 2 x 16 TB                                       \\
+%                System operacyjny  & Debian GNU/Linux 12                             \\
+%                \hline
+%                \multicolumn{2}{|l|}{\textbf{Laptop: ROG Flow Z13 GZ301ZC}} \\ \hline
+%                Procesor           & Intel i7-12700H (20 wątków) @ 4.60GHz           \\
+%                Karty graficzne    & NVIDIA RTX 3050 Mobile, Intel Alder Lake-P      \\
+%                Pamięć RAM         & 16 GB                                           \\
+%                System operacyjny  & Pop!\_OS 22.04 LTS                              \\
+%                \hline
+%            \end{tabular}
+%        }
+%    \end{table}
+%
+%    \subsection{Środowisko obliczeniowe}
+%    \begin{itemize}
+%        \item \textbf{Wsparcie dla GPU:}
+%        Kluczowe przy trenowaniu głębokich sieci neuronowych i przetwarzaniu dużych zbiorów danych.
+%        \item \textbf{Praca rozproszona:} Możliwość efektywnego korzystania z wielu urządzeń.
+%        \item \textbf{Optymalizacja hiperparametrów:} Automatyzacja zarządzania zasobami i optymalizacji.
+%    \end{itemize}
+%
+%    \subsection{Narzędzia programistyczne}
+%    \begin{itemize}
+%        \item \textbf{Docker:} Konteneryzacja aplikacji zapewniająca izolację i skalowalność.
+%        \item \textbf{Poetry:} Zarządzanie zależnościami w Pythonie.
+%        \item \textbf{Git:} System kontroli wersji do śledzenia zmian w kodzie.
+%        \item \textbf{Jupyter Notebook:}
+%        Testowanie metod analizy danych i modeli z wykorzystaniem interaktywnego środowiska.
+%    \end{itemize}
+%
+%    \subsection{Frameworki uczenia maszynowego}
+%    \begin{itemize}
+%        \item \textbf{PyTorch:} Dynamiczny graf obliczeniowy, wsparcie GPU.
+%        \item \textbf{PyTorch Lightning:} Automatyzacja trenowania, zaawansowane logowanie i monitorowanie.
+%        \item \textbf{Ray i RAITune:}
+%        Zarządzanie pracą rozproszoną oraz optymalizacja hiperparametrów z wykorzystaniem metod bayesowskich.
+%    \end{itemize}
+%
+%    \subsection{Przetwarzanie i wizualizacja danych}
+%    \begin{itemize}
+%        \item \textbf{Odczyt danych:}
+%        Pliki .edf przetwarzane za pomocą biblioteki MNE, konwersja do formatu tabelarycznego (Pandas).
+%        \item \textbf{Transformacja falkowa:} Użycie \texttt{PyWavelets}, falki \texttt{cgau4} do analizy sygnałów EEG.
+%        \item \textbf{Monitorowanie uczenia:} Logowanie metryk i hiperparametrów za pomocą PyTorch Lightning i Weights
+%        \\ Biases.
+%    \end{itemize}
+%
+%    \begin{figure}[h!]
+%        \centering
+%        \includegraphics[width=0.3\textwidth]{fig/serwer_knml}
+%        \caption{Serwer wykorzystywany w projekcie.}
+%        \label{fig:serwer_knml}
+%    \end{figure}
+%
+%    \begin{table}[h!]
+%        \centering
+%        \caption{Narzędzia do monitorowania procesu uczenia}
+%        \label{tab:monitorowanie_uczenia}
+%        \resizebox{\columnwidth}{!}{%
+%            \begin{tabular}{|l|l|}
+%                \hline
+%                \textbf{Narzędzie} & \textbf{Funkcjonalność}                                     \\ \hline
+%                PyTorch Lightning  & Logowanie metryk, hiperparametrów, integracja z TensorBoard \\
+%                Weights \\ Biases        & Wizualizacja wielowymiarowych danych, analiza eksperymentów
+%                \\
+%                TensorBoard        & Podgląd metryk w czasie rzeczywistym                        \\
+%                \hline
+%            \end{tabular}
+%        }
+%    \end{table}
+
+
+    \section{Podziału danych}
+    Podział danych obejmuje dwa etapy: podział na sekwencje czasowe oraz na zbiory treningowy i walidacyjny. Najpierw dane dzielone są
+    na mniejsze sekwencje czasowe (instancje) przy użyciu różnych metod segmentacji. Następnie próbki te są rozdzielane na
+    zbiory treningowy i walidacyjny, z zachowaniem proporcji klas, co zapewnia reprezentatywność i poprawność oceny modelu.
+
+    \subsection{Metody podziału danych na instancje}
+    Tak jak w lietraturze \cite{boutarfaia2023,roots2020}
+    zdecydowano się na podział danych na krótkie sekwencje czasowe o wybranej długości bez nakładania się, natomiast można rozważyć 3 różne podejścia poniżej
+    przedstawiono opis oraz wizualizację każdej z tych metod.
+
+    \paragraph{Pełne okna na całą klasę}
+    W tej metodzie sekwencje rozpoczynają się równo z zmianą klasy są traktowane jako pojedyncze instancje. Liczba próbek w
+    zbiorze treningowym i testowym odpowiada liczebności klas. Ta metoda pozwala na utrzymanie
+    stałej struktury danych, co ułatwia interpretację wyników (problematyczne kiedy klasy mają różne długości). Przykład wizualizacji tej metody przedstawiono na rysunku
+    \ref{fig:full_windows}.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.5\textwidth,link=true]{fig/separate_fore_each_class}
+        \caption{Podział na pełne okna (bez nakładania). (Rysunek własny)}
+        \label{fig:full_windows}
+    \end{figure}
+
+    \paragraph{Okna o dowolnej długości bez nakładania się}
+    Dane dzielone są na okna o określonej długości sekwencji (np. \texttt{sequence\_length} $=2 s$ ) kążde okno jest pojedynczą instancją
+    oraz jest niezależne i następuje bezpośrednio po poprzednim. Zwiększenie liczby krótszych okien pozwala na
+    uzyskanie większej liczby próbek w zbiorze treningowym, co może poprawić zdolności generalizacji modelu. Przykład
+    wizualizacji tej metody przedstawiono na rysunku \ref{fig:non_overlapping}.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.5\textwidth,link=true]{fig/separate_fore_seq_length}
+        \caption{Okna o dowolnej długości (bez nakładania). (Rysunek własny)}
+        \label{fig:non_overlapping}
+    \end{figure}
+
+    \paragraph{Okna o dowolnej długości z nakładaniem się}
+    W tej metodzie okna o długości sekwencji \texttt{sequence\_length}
+    nachodzą na siebie. Dla zobrazowania, przesunięcie
+    $overlap = 50\%$
+    powoduje, że każde kolejne okno rozpoczyna się w połowie poprzedniego. Dzięki temu uzyskuje się większą
+    liczbę instancji, kosztem mniejszej różnorodności danych. Przykład
+    wizualizacji tej metody przedstawiono na rysunku \ref{fig:overlapping}.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.5\textwidth,link=true]{fig/overlappint_fore_seq_length}
+        \caption{Okna o dowolnej długości (z nakładaniem 50\%). (Rysunek własny)}
+        \label{fig:overlapping}
+    \end{figure}
+
+    \subsection{Podział zbioru danych na zbiory treningowy i walidacyjny}
+    W ramach eksperymentu zdecydowano się na podział danych na dwa zbiory: treningowy i walidacyjny. Pomimo że w wielu
+    przypadkach stosuje się dodatkowy zbiór walidacyjny, w tym badaniu ograniczono się do dwóch zbiorów w celu
+    oszczędności czasu. Zbiór treningowy stanowił 80\% danych, a zbiór walidacyjny 20\%
+    , przy zachowaniu proporcji klas, co zapewniło danych w obu zestawach.
+
+    Do badań w tym eksperymencie wybrano metodę dzielenia na próbki z użyciem okien o dowolnej długości bez nakładania.
+    Wybór ten podyktowany był możliwością elastycznego dopasowania długości sekwencji, co pozwala na dokładniejsze
+    zbadanie wpływu tego parametru na wyniki modelu. Metoda z pełnymi oknami dla całych klas została odrzucona, gdyż nie
+    umożliwia dostosowania długości sekwencji. Z kolei metoda z oknami o dowolnej
+    długości z nakładaniem została wykluczona ze względu na generowanie dużej liczby próbek, co przy dostępnych zasobach
+    obliczeniowych znacząco wydłużyłoby czas szkolenia modeli.
+
+
+    \section{Przetwarzanie danych EEG do eksperymentu}
+
+    Przetwarzanie sygnałów EEG przed szkoleniem modeli wymaga zastosowania odpowiednich technik wstępnej obróbki. W tej
+    pracy skupiamy się na dwóch kluczowych etapach: normalizacji oraz transformacji falkowej.
+
+    \subsection{Normalizacja sygnałów EEG}
+
+    W celu zapewnienia spójności danych i poprawy efektywności modeli uczenia maszynowego, sygnały EEG zostały poddane
+    normalizacji min-max. Normalizacja ta jest wykonywana osobno dla każdego kanału w każdym eksperymencie, co pozwala
+    na zachowanie względnych różnic między wartościami sygnału w obrębie jednego kanału, jednocześnie eliminując różnice
+    w amplitudzie między kanałami i eksperymentami.
+
+    Wzór na normalizację min-max dla każdego kanału w danym eksperymencie przedstawiono poniżej:
+
+    \[
+        X_{norm} = \frac{X - X_{min}}{X_{max} - X_{min}}
+    \]
+
+    gdzie:
+    \begin{description}
+        \item \(X\) – oryginalny sygnał EEG,
+        \item \(X_{min}\) – minimalna wartość sygnału dla danego kanału w eksperymencie,
+        \item \(X_{max}\) – maksymalna wartość sygnału dla danego kanału w eksperymencie,
+        \item \(X_{norm}\) – znormalizowany sygnał EEG, przyjmujący wartości z zakresu \([0, 1]\).
+    \end{description}
+
+    Normalizacja min-max jest szczególnie przydatna w analizie sygnałów EEG, ponieważ zachowuje względne różnice między
+    wartościami sygnału, jednocześnie ograniczając je do ustalonego zakresu. Przykłady zastosowania tego podejścia można
+    znaleźć w literaturze, np. w \cite{roots2020}
+    , gdzie wykazano, że normalizacja sygnałów EEG istotnie poprawia jakość klasyfikacji.
+
+
+    \subsection{Transformacja falkowa}
+
+    Transformacja falkowa (ang. \textit{Wavelet Transform}
+    , WT) jest techniką analizy sygnałów, która umożliwia dekompozycję danych na składowe o różnej skali. Jest to
+    szczególnie użyteczne w analizie sygnałów EEG, które charakteryzują się zmiennością zarówno w czasie, jak i w
+    częstotliwości.
+
+    \subsubsection{Wzór na ciągłą transformatę falkową}
+
+    Ciągła transformata falkowa sygnału \( x(t) \) jest definiowana jako:
+
+    \[
+        W_x(a, b) = \frac{1}{\sqrt{|a|}} \int_{-\infty}^{\infty} x(t) \, \psi^*\left(\frac{t - b}{a}\right) \, dt
+    \]
+
+    gdzie:
+    \begin{description}
+        \item \( W_x(a, b) \) – współczynnik transformaty falkowej dla skali \( a \) i przesunięcia \( b \),
+        \item \( x(t) \) – analizowany sygnał,
+        \item \( \psi(t) \) – funkcja falki (tzw. falka matka),
+        \item \( \psi^*(t) \) – sprzężenie zespolone falki \( \psi(t) \),
+        \item \( a \) – parametr skali (rozciągnięcie lub skurczenie falki),
+        \item \( b \) – parametr przesunięcia (lokalizacja czasowa),
+        \item \( t \) – czas.
+    \end{description}
+
+    Wzór ten opisuje, jak sygnał \( x(t) \) jest korelowany z falką \( \psi(t) \)
+    w różnych skalach i przesunięciach, co umożliwia analizę lokalnych cech sygnału w dziedzinie czas-częstotliwość.
+    Szczegółowe omówienie transformaty falkowej oraz jej zastosowań można znaleźć w literaturze, np. w
+    \cite{bibliotekanauki}
+    , gdzie przedstawiono podstawy teoretyczne transformaty falkowej oraz przykłady jej zastosowań w analizie sygnałów.
+
+    \subsubsection{Typ falki}
+
+    W analizie sygnałów EEG często stosuje się różne rodzaje falek, w zależności od charakterystyki sygnału i celu
+    analizy. Dwa popularne typy falek to falka Morleta oraz falki Daubechies.
+
+    \paragraph{Falka Morleta}
+    Falka Morleta \( \psi(t) \) jest sinusoidą modulowaną oknem Gaussa i jest zdefiniowana jako:
+    \[
+        \psi(t) = \exp\left(-\frac{t^2}{2}\right) \cdot \exp(j\omega t),
+    \]
+    gdzie:
+    \begin{description}
+        \item \( j \) – jednostka urojona (\( j^2 = -1 \)),
+        \item \( \omega \) – częstotliwość centralna falki.
+    \end{description}
+    Falka Morleta jest szczególnie przydatna w analizie sygnałów EEG, ponieważ dobrze odwzorowuje składowe o charakterze
+    oscylacyjnym, co jest typowe dla sygnałów mózgowych.
+
+    \paragraph{Falki Daubechies}
+    Falki Daubechies to rodzina falek ortogonalnych, które są szeroko stosowane w analizie sygnałów ze względu na ich
+    dobre właściwości czasowo-częstotliwościowe. Falki te charakteryzują się zwartym nośnikiem (są niezerowe tylko w
+    skończonym przedziale czasu) oraz różną liczbą momentów znikających, co pozwala na efektywną dekompozycję sygnałów.
+    W tej pracy zastosowano falę Daubechies 4 (\textit{db4}
+    ), która jest jedną z najczęściej wykorzystywanych falek w analizie EEG. Falka db4 dobrze odwzorowuje szybkie zmiany
+    sygnałów, co czyni ją odpowiednią dla danych EEG.
+
+    \subsubsection{Wzór na falkę Daubechies 4 (db4)}
+    Falka Daubechies 4 jest definiowana przez swoje współczynniki skalujące i falkowe. Współczynniki skalujące dla falki
+    db4 są następujące:
+
+    \[
+        \begin{aligned}
+            h_0 &= \frac{1 + \sqrt{3}}{4\sqrt{2}}, \\
+            h_1 &= \frac{3 + \sqrt{3}}{4\sqrt{2}}, \\
+            h_2 &= \frac{3 - \sqrt{3}}{4\sqrt{2}}, \\
+            h_3 &= \frac{1 - \sqrt{3}}{4\sqrt{2}},
+        \end{aligned}
+    \]
+
+    gdzie \( h_0, h_1, h_2, h_3 \) to współczynniki skalujące, a współczynniki falkowe \( g_k \) są obliczane jako:
+
+    \[
+        g_k = (-1)^k h_{3-k} \quad \text{dla} \quad k = 0, 1, 2, 3.
+    \]
+
+    Funkcja skalująca \( \phi(t) \) i falkowa \( \psi(t) \) są definiowane rekurencyjnie poprzez te współczynniki:
+
+    \[
+        \phi(t) = \sqrt{2} \sum_{k=0}^{3} h_k \phi(2t - k),
+    \]
+
+    \[
+        \psi(t) = \sqrt{2} \sum_{k=0}^{3} g_k \phi(2t - k).
+    \]
+
+    Te równania opisują, jak funkcja skalująca i falkowa są generowane na podstawie współczynników \( h_k \) i \( g_k \)
+    \cite{daubechies1992}.
+
+    \subsubsection{Zastosowanie falki Daubechies w analizie sygnałów}
+    Falki Daubechies są szeroko stosowane w analizie sygnałów, szczególnie w kontekście dyskretnej transformacji
+    falkowej (DWT). Są one wykorzystywane do dekompozycji sygnałów na składowe o różnej skali, co jest szczególnie
+    przydatne w analizie sygnałów EEG, kompresji danych oraz usuwaniu szumów \cite{mallat1999}.
+
+    \subsubsection{Zastosowanie transformacji falkowej}
+
+    Transformacja falkowa jest wykorzystywana wyłącznie w modelach, które integrują splotowe sieci neuronowe (CNN). W
+    artykule \cite{rajwal2023}
+    wykazano, że transformacja falkowa w połączeniu z CNN znacząco poprawia dokładność klasyfikacji sygnałów EEG. CNN
+    potrafią efektywnie uczyć się wzorców na podstawie cech czasowo-częstotliwościowych uzyskanych dzięki transformacji
+    falkowej.
+
+    \subsection{Podsumowanie}
+
+    Zaproponowana metodologia przetwarzania danych EEG obejmuje normalizację danych dla każdego eksperymentu z osobna
+    oraz transformację falkową z wykorzystaniem falki Daubechies 4. Transformacja falkowa umożliwia efektywne wydobycie
+    cech czasowo-częstotliwościowych, co jest kluczowe w przypadku modeli opartych na sieciach spolotowych. Dzięki
+    takiemu podejściu możliwe jest uzyskanie wysokiej dokładności klasyfikacji sygnałów EEG w ramach eksperymentów
+    naukowych.
+
+\end{document}

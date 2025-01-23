@@ -1,0 +1,48 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+
+% Document
+\begin{document}
+
+
+
+
+    \section{Eksperyment dla odseparowanych osób w zbiorze testowym i treningowym}
+
+    Celem tego eksperymentu było zbadanie zdolności modelu do uogólniania w warunkach, w których osoby w zbiorze
+    treningowym i testowym są odseparowane. W zbiorze treningowym uwzględniono dane od osób o numerach 1, 2, 8, 9, 14,
+    17, 24 oraz 29, natomiast w zbiorze testowym znalazły się osoby o numerach 32 oraz 54. Pozostałe założenia
+    eksperymentalne, takie jak wybór zadania, normalizacja danych, przestrzeń wyszukiwania hiperparametrów oraz
+    struktura modelu i proces uczenia, były identyczne z opisanymi w sekcji \ref{sec:exp_non_separated}.
+
+    \subsection{Wyniki eksperymentu}
+
+    Wyniki tego eksperymentu wskazują na trudności modelu w uogólnianiu danych od nowych osób. Żaden z testowanych
+    konfiguracji nie osiągnąła dokładności większej niż \(51\%\)
+    , co świadczy o problemach z generalizacją w kontekście odseparowanych osób co obrzuje wykres równoległy
+    hiperparametórw i dokłdaności \ref{fig:parallel_plot_separated}.
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/parallel_plot_separated}
+        \caption
+        {Korelacje hiperparametrów z dokładnością na wykresie typu \textit{parallel plot} dla odseparowanych osób}
+        \label{fig:parallel_plot_separated}
+    \end{figure}
+
+    \subsection{Wnioski}
+
+    Dane od nowych osób w zbiorze testowym znacząco różniły się od danych w zbiorze treningowym. Modele nie były w
+    stanie dostatecznie dobrze uogólnić, co skutkowało niską dokładnością klasyfikacji nie przekraczającą \(51\%\)
+    . Wyniki te sugerują potrzebę
+    dalszej analizy, szczególnie w kontekście różnic między indywidualnymi sygnałami EEG, oraz potencjalne zmiany w
+    architekturze modelu lub strategii przetwarzania danych w przyszłych eksperymentach.
+
+
+
+
+\end{document}

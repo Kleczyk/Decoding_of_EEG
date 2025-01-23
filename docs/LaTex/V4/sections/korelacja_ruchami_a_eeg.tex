@@ -1,0 +1,64 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+% Document
+\begin{document}
+    \section{Korelacja między ruchami a sygnałami EEG}
+
+    Rozpoznawanie intencji ruchowych z sygnałów EEG jest jednym z kluczowych obszarów badań w dziedzinie interfejsów
+    mózg-komputer Brain-Computer Interface(BCI). W szczególności potencjały elektryczne mierzone w mózgu, które
+    towarzyszą przygotowaniu i wykonaniu ruchów Movement-Related Cortical Potentials
+    (MRCPs) oraz wzorce czasowo-częstotliwościowe odgrywają kluczową rolę w przewidywaniu kierunku ruchu.
+
+    \subsection{Potencjały związane z ruchem}
+    Jak pokazano w pracy \cite{wang2022}
+    , MRCPs mogą być używane do przewidywania ruchów ręki na podstawie niskoczęstotliwościowych sygnałów EEG (0.01–4 Hz)
+    Rysunek~\ref{fig:mrcp_plot}
+    przedstawia średnie potencjały korowe \cite{Silva2020} (MRCPs)
+    zarejestrowane w elektrodzie \textit{Cz}, która znajduje się w linii środkowej
+    głowy (litera \textit{z} – Zero Line) i odpowiada środkowym obszarom pierwotnej kory ruchowej (\textit{C}
+    – Central) . Wykres ilustruje zmiany potencjałów w czasie przygotowania i wykonania ruchu. Amplitudy potencjałów
+    pozostawały stabilne w fazie przygotowania ruchu (od -1,5 do 0 s), natomiast podczas inicjacji ruchu zaobserwowano
+    znaczną negatywną zmianę potencjału, co jest charakterystyczne dla aktywności związanej z wykonaniem ruchu.
+
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.4\textwidth]{fig/mrcp_plot.png}
+        \caption{Średnie potencjały korowe (MRCPs) w elektrodzie Cz dla kierunków ruchu prawej ręki (lewo i prawo)
+            . Czas 0 s odnosi się do momentu inicjacji ruchu. Źródło: \cite{wang2022}}
+        \label{fig:mrcp_plot}
+    \end{figure}
+
+    \subsection{Wzorce czasowo-częstotliwościowe}
+    W pracy \cite{wang2022} zbadano również wzorce czasowo-częstotliwościowe. Rysunek~\ref{fig:time_frequency_plot}
+    przedstawia widmo czasowo-częstotliwościowe, które ukazuje wzrost energii w niskich częstotliwościach (< 7 Hz) w
+    czasie wykonywania ruchu. Wynik ten potwierdza, że główne modulacje mocy związane z ruchem są skoncentrowane w
+    niskim zakresie częstotliwości.
+
+
+    \begin{figure}[h]
+        \centering
+        \includegraphics[width=0.4\textwidth]{fig/time_frequency_plot.png}
+        \caption
+        {Widmo czasowo-częstotliwościowe sygnałów EEG w kanale Cz dla ruchu prawej ręki. Czas 0 s odnosi się do momentu
+        inicjacji ruchu. Źródło: \cite{wang2022}}
+        \label{fig:time_frequency_plot}
+    \end{figure}
+
+    \subsection{Dekodowanie kierunku ruchu}
+    Dzięki zaawansowanym metodom, takim jak wykorzystanie nieliniowych dynamicznych parametrów MRCPs, w artykule
+    \cite{wang2022} osiągnięto
+    wysoką dokładność w dekodowaniu kierunków ruchu. Zastosowana metoda oparta na analizie sieci ESN (Echo State
+    Networks) - sieci echo-stanu
+    osiągnęła średnią dokładność dekodowania na poziomie $89.48\%$.
+
+    Przeprowadzone badania potwierdzają, że sygnały EEG zawierają istotne informacje o ruchach, co uzasadnia możliwość
+    tworzenia zaawansowanych modeli do dekodowania intencji ruchowych. Takie modele mogą być wykorzystane w praktycznych
+    zastosowaniach, takich jak interfejsy BCI, systemy wspomagające rehabilitację, czy sterowanie protezami i
+    egzoszkieletami.
+
+
+\end{document}

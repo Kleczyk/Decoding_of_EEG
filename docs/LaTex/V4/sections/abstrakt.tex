@@ -1,0 +1,38 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+
+% Document
+\begin{document}
+
+    \section*{Abstrakt}
+    Celem niniejszej pracy jest opracowanie modelu rozpoznającego intencje ruchowe na podstawie sygnałów EEG,
+    wykorzystującego różne konfiguracje rekurencyjnych sieci neuronowych (RNN), w tym w szczególności sieci LSTM (Long
+    Short-Term Memory). Projekt bada możliwość precyzyjnego rozpoznania intencji ruchowych w warunkach offline oraz
+    analizuje wymagania, które muszą zostać spełnione, aby osiągnąć wysoką dokładność tego procesu. Istotnym aspektem
+    jest ocena możliwości uogólnienia modelu na dane pochodzące od osób spoza zbioru uczącego, co stanowi kluczowy
+    element w kontekście praktycznych zastosowań. W pracy wykorzystano dane z \emph{EEG Motor Movement/Imagery Dataset}
+    \cite{goldberger2000}
+    , dostępne w zbiorze PhysioNet. Analiza opierała się na dwóch wybranych klasach ruchowych oraz jednej spoczynkowej.
+    Przeprowadzone
+    eksperymenty wykazały, że przy odpowiednim podziale próbek pomiędzy zbiór treningowy i walidacyjny, z zachowaniem
+    tej
+    samej liczebności klas, model osiągnął dokładność na poziomie 0.9833, a pole pod krzywą ROC uzyskało wartość 0.99915
+    dla zbioru testowego zawierającego próbki od tych samych osób, które znajdowały się w zbiorze treningowym. Model
+    oparty na sieci LSTM z warstwą wpełni połązconych neuronów (FC) fully-connected,
+    który osiągnął najwyższą skuteczność, charakteryzował się następującymi parametrami: rozmiar warstwy ukrytej (hidden
+    size) = 334, współczynnik uczenia (learning rate) = $3.587 \times 10^{-5}$
+    , liczba warstw = 2, współczynnik dropout = 0.393, długość sekwencji = 86. Natomiast próba wyszkolenia modelu LSTM
+    na danych, w których osoby z testowego zbioru danych były wyseparowane ze zbioru treningowego, zakończyła się
+    niepowodzeniem – dokładność nigdy nie przekroczyła 0.5. Sugeruje to bardzo odmienny charakter danych dla różnych
+    osób lub niewystarczającą zdolność modeli LSTM do uogólniania. Praca ma na celu przyczynienie się do rozwoju
+    interfejsów mózg-komputer (BCI – Brain-Computer Interface), które mogą znaleźć zastosowanie w poprawie jakości życia
+    osób z niepełnosprawnościami. Szczególny nacisk kładzie się na potencjalne wykorzystanie tego typu modeli do
+    sterowania urządzeniami, takimi jak protezy, wyłącznie za pomocą myśli użytkownika. Wyniki badań mogą również
+    dostarczyć cennych informacji na temat warunków niezbędnych do skutecznego wykorzystania sygnałów EEG w praktyce.
+
+
+\end{document}

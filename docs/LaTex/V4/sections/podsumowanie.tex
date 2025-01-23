@@ -1,0 +1,103 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+% Document
+\begin{document}
+
+
+    \section{Podsumowanie}
+    \label{sec:podsumowanie}
+
+    W niniejszej pracy przedstawiono wyniki eksperymentów dotyczących dekodowania intencji ruchowych na podstawie
+    sygnałów
+    EEG z wykorzystaniem modelu \texttt{LSTM + fully connected} (FC)
+    . W części przeglądowej omówiono różnorodne podejścia do
+    klasyfikacji sygnałów EEG, w tym architektury typu CNN czy CNN-LSTM \cite{boutarfaia2023,roots2020}, jednakże w ramach własnych badań
+    skupiono się wyłącznie na modelu opartym na warstwie LSTM, do której wyjście zostało podłączone do w pełni
+    połączonej
+    warstwy końcowej (FC).
+
+    \subsection*{Wyniki dla osób nieodseparowanych w zbiorze treningowym i testowym}
+    Pierwszy eksperyment zakładał, że te same osoby (uczestnicy badania EEG) występują zarówno w zbiorze treningowym,
+    jak i
+    testowym. W tej konfiguracji – po dopasowaniu odpowiednich hiperparametrów (m.in. \textit{learning rate},
+    \textit{hidden
+    size}, \textit{dropout}
+    i długości sekwencji) – uzyskano bardzo wysokie wyniki klasyfikacji. Najlepsze modele osiągnęły
+    dokładność na poziomie ok. \(0{,}9833\), a pole pod krzywą ROC (AUC) przyjmowało wartości sięgające nawet
+    \(0{,}99915\)
+    na zbiorze testowym. Tak wysoka skuteczność wskazuje, że zastosowany model LSTM potrafi skutecznie wyodrębniać
+    wzorce
+    związane z realnym lub wyobrażonym ruchem kończyn w sytuacji, gdy dane od tych samych osób pojawiają się już w fazie
+    treningu.
+
+    \subsection*{Wyniki dla osób odseparowanych w zbiorze treningowym i testowym}
+    Drugi eksperyment miał na celu zweryfikowanie, w jakim stopniu model jest w stanie uogólniać (generalizować) się na
+    dane
+    pochodzące od osób nieobecnych w zbiorze treningowym. W tym celu zbiór treningowy i testowy został podzielony tak,
+    aby
+    uczestnicy badania w zbiorze testowym byli całkowicie odseparowani od tych w zbiorze treningowym. Wyniki pokazały,
+    iż
+    model LSTM, w testowanej konfiguracji i bez dodatkowych technik adaptacyjnych, nie był w stanie przekroczyć
+    dokładności
+    ok. \(0{,}51\), co oznacza skuteczność zbliżoną do losowej.
+
+    \subsection*{Wnioski główne}
+    \begin{enumerate}
+        \item \textbf{Skuteczność modelu w przypadku nieodseparowanych danych}
+        Uzyskane wysokie wyniki (dokładność powyżej 0.98 oraz AUC bliskie 1.0) wskazują, że model LSTM znakomicie
+        identyfikuje specyficzne wzorce EEG w sytuacji, gdy w zbiorze treningowym znajdują się dane od tych samych osób,
+        które później występują w zbiorze testowym.
+
+        \item \textbf{Brak uogólnienia na osoby spoza zbioru treningowego}
+        W warunkach, gdy osoby ze zbioru testowego nie pojawiły się w zbiorze treningowym, dokładność modelu spada do
+        poziomu
+        ok. 0.5. Fakt ten wskazuje na duże zróżnicowanie sygnałów EEG między różnymi uczestnikami oraz konieczność
+        opracowania lub zastosowania metod pozwalających na adaptację modelu do nowych użytkowników.
+
+        \item \textbf{Perspektywy dla dalszych badań nad BCI}
+        Zaprezentowane wyniki potwierdzają zasadność wykorzystania rekurencyjnych sieci LSTM w zadaniach typu
+        \textit{Motor Imagery}. Jednocześnie podkreślają potrzebę wdrażania metod pozwalających na personalizację modelu
+        bądź wykorzystanie transfer learningu, aby przełamać problem niskiej generalizacji na osoby nieobecne w fazie
+        trenowania.
+    \end{enumerate}
+
+    \subsection*{Dalsze kierunki rozwoju}
+    \begin{itemize}
+        \item \textbf{Rozbudowa i zróżnicowanie zbioru danych:}
+        Planuje się rozszerzyć liczbę uczestników badania EEG oraz włączyć dodatkowe zadania motoryczne lub
+        wyobrażeniowe,
+        co pozwoli na bardziej wiarygodną ocenę uogólniania modelu.
+
+        \item \textbf{Personalizacja i transfer learning:}
+        Jednym z kluczowych wyzwań w zastosowaniach \textit{Brain-Computer Interface} (BCI) jest dostosowanie modeli
+        do indywidualnych cech użytkownika. Wprowadzenie metod \textit{transfer learningu} czy
+        \textit{few-shot learningu}
+        może znacząco poprawić wyniki uzyskiwane dla nowych osób.
+
+        \item \textbf{Porównanie z innymi modelami:}
+        Chociaż w niniejszej pracy skupiono się wyłącznie na modelu LSTM + FC, przyszłe prace mogą uwzględniać również
+        architektury hybrydowe (np. CNN-LSTM), które w literaturze nierzadko wykazują wysoką skuteczność w zadaniach
+        klasyfikacji sygnałów EEG \cite{boutarfaia2023,roots2020}.
+
+        \item \textbf{Badanie stabilności i odporności na zakłócenia:}
+        W praktycznych zastosowaniach BCI istotne jest, aby model pozostawał stabilny w obecności artefaktów (np. z
+        ruchów gałek ocznych czy zakłóceń elektromagnetycznych). W związku z tym warto rozważyć mechanizmy dodatkowej
+        filtracji sygnału i zaawansowane metody detekcji artefaktów.
+    \end{itemize}
+
+    Ostatecznie, uzyskane wyniki potwierdzają, iż sieci LSTM stanowią wartościowe narzędzie w dekodowaniu intencji
+    ruchowych
+    z EEG, zwłaszcza w warunkach, gdy dane uczące i testowe pochodzą od tych samych osób. Jednak w kontekście
+    opracowywania
+    uniwersalnych interfejsów mózg–komputer, zdolnych do natychmiastowego działania na nieznanych użytkownikach,
+    konieczny
+    jest dalszy rozwój metod adaptacyjnych i personalizowanych, które umożliwią znaczące zwiększenie ogólnej
+    skuteczności
+    klasyfikacji.
+
+
+\end{document}

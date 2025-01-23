@@ -1,0 +1,143 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+% Document
+\begin{document}
+
+    \section{Przegląd wybranych metod klasyfikacji sygnałów EEG dla zadania ``\emph{Motor Imagery}''}
+    \label{sec:metody_eeg}
+    Motor Imagery (MI) to proces mentalnego wyobrażania sobie ruchu bez jego faktycznego wykonania, który może aktywować
+    lub hamować aktywność w korze mózgowej. W kontekście Echo State Networks MI znajduje zastosowanie w modelowaniu i
+    analizie procesów związanych z kontrolą ruchu.
+
+    W literaturze dotyczącej klasyfikacji sygnałów EEG w kontekście wyobrażeniowych ruchów (MI) kluczową rolę odgrywa
+    analiza zbiorów danych, umożliwiających ocenę skuteczności różnych modeli uczenia maszynowego. Jednym z takich
+    zbiorów jest EEG Motor Movement/Imagery Dataset, udostępniany przez repozytorium ogólnodostępnych danych badawczych
+    zarządzane przez MIT Laboratory for Computational Physiology \cite{goldberger2000}.
+
+    Zbiór ten obejmuje ponad 1500 nagrań z udziałem 109 ochotników, zarejestrowanych za pomocą systemu BCI2000 –
+    wszechstronnej platformy oprogramowania zaprojektowanej do badań i aplikacji związanych z interfejsami mózg-komputer
+    (BCI – Brain-Computer Interfaces). Dane te zawierają sygnały związane zarówno z rzeczywistymi ruchami kończyn, jak i
+    ich wyobrażeniem, co czyni je wartościowym źródłem do testowania nowoczesnych metod głębokiego uczenia.
+
+    \subsection{Przetwarzanie danych i segmentacja}
+    Przed wykorzystaniem do uczenia modeli, sygnały EEG są zazwyczaj poddawane filtracji w celu redukcji szumów oraz
+    artefaktów. Standardowo stosuje się filtr Notcha (usuwający składową 50/60 Hz związaną z zasilaniem) oraz filtr
+    pasmowoprzepustowy ograniczający zakres częstotliwości do przedziału od 2--8 Hz do 30--60 Hz, w zależności od
+    założeń eksperymentu \cite{boutarfaia2023,roots2020}
+    . Sygnały mogą być również poddane ponownemu próbkowaniu (np. do 125 Hz lub 160 Hz) w celu standaryzacji oraz
+    zmniejszenia
+    wymiarowości danych.
+
+    W pracach \cite{boutarfaia2023,roots2020} podzielono nagrania na krótkie segmenty czasowe (ang. \emph{segmentation}
+    lub \emph{windowing}
+    ), np. 4-sekundowe próby. Każdą próbę można dodatkowo rozdzielić na mniejsze, niekolidujące okna (np. 8 okien po 0,5
+    s), co zwiększa liczbę dostępnych przykładów treningowych i ułatwia sieciom neuronowym wykrywanie lokalnych cech
+    czasowo-częstotliwościowych.
+
+    \subsection{Architektury modeli głębokiego uczenia}
+    W kontekście klasyfikacji sygnałów EEG związanych z wyobrażeniami ruchowymi szczególnie skuteczne są splotowe
+    sieci neuronowe (CNN). Autorzy \cite{boutarfaia2023}
+    przeanalizowali kilka wariantów, w tym samą sieć CNN oraz jej hybrydy z LSTM (ang. \emph{Long Short-Term Memory}):
+
+    \begin{itemize}
+        \item \textbf{CNN}
+        -- sieć koncentruje się na wyodrębnianiu cech przestrzennych (tj. między elektrodami) oraz krótkich zależności
+        czasowych.
+        \item \textbf{CNN-LSTM}
+        -- łączy warstwy splotowe z warstwami LSTM, co pozwala na uchwycenie zarówno cech przestrzennych, jak i
+        dłuższych zależności czasowych.
+        \item \textbf{CNN-BiLSTM} -- wykorzystuje dwukierunkowe \ref{fig:CNN-BiLSTM} LSTM (ang.
+        \emph{Bidirectional LSTM}
+        ), co umożliwia analizę sygnału zarówno w przód, jak i wstecz wzdłuż osi czasowej.
+    \end{itemize}
+
+    W pracy \cite{boutarfaia2023} modele trenowano na zbiorach danych podzielonych na:
+    \begin{itemize}
+        \item 70\% danych do zbioru trenigowego w celu uczenia modelu,
+        \item 10\% danych do zbioru walidacyjnego w celu optymalizacji hiperparametrów,
+        \item 20\%
+        danych do zbioru testowego w celu oceny modelu przy użyciu danych które nie były używane ani do treningu ani do
+        dostarajania hiperparametórw.
+    \end{itemize}
+
+    \textbf{Wybrane eksperymenty i uczestnicy:}
+    W badaniu wykorzystano podzbiór danych EEG pochodzących od siedmiu losowo wybranych uczestników. Skupiono się na
+    sześciu zadaniach związanych z wyobrażeniami ruchowymi, oznaczonych numerami 4, 6, 8, 10, 12 i 14. Każdy z tych
+    zadań dotyczył wyobrażonych ruchów, takich jak zamykanie i otwieranie lewej lub prawej dłoni, a także obu pięści i
+    obu stóp.
+
+    \textbf{Liczba próbek:}
+    W przypadku analizowanych danych, liczba pojedynczych próbek wynosiła 826 560 przy zadanicha zdefinowanych powyżej
+    oraz losowaniu 7 uczestników. Przyjmując, że jeden pomiar składał
+    się średnio z 19 721 próbek, całkowita liczba próbek dla siedmiu uczestników i sześciu zadań wynosiła
+    \(19 721 \times 7 \times 6 = 828 324\)
+    , co jest zbliżone do podanej wartości 830 880. Różnica może wynikać z nierównych czasów trwania zadań.
+
+    \textbf{Trening modeli:}
+    Trening trwał przez 100 epok z użyciem optymalizatora Adam, wskaźnika uczenia 0,0001 i \emph{batch size}
+    wynoszącego 32. Wyniki dla modelu CNN osiągnęły dokładność 99,86\%, natomiast dla CNN-LSTM 98,39\%
+    \cite{boutarfaia2023}.
+    W pracy \cite{roots2020} zaproponowano podejście
+    \emph{Fusion Convolutional Neural Network} (tzw. \emph{EEGNet Fusion})
+    , które obejmuje kilka równoległych gałęzi spolotowych o różnych hiperparametrach (liczba filtrów, rozmiar jąder
+    splotowych) \ref{fig:eegnet_fusion}. Uzyskane cechy są następnie łączone w specjalnej warstwie fuzji (
+    \emph{fusion layer}).
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=\textwidth]{fig/eegnet_fusion}
+
+        \caption{Schemat architektury EEGNet Fusion \cite{roots2020}.}
+        \label{fig:eegnet_fusion}
+    \end{figure}
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.7\textwidth]{fig/CNN_BILSTM}
+        \caption{Schemat architektury CNN-BiLSTM \cite{boutarfaia2023}.}
+        \label{fig:CNN-BiLSTM}
+    \end{figure}
+
+    Wyniki dla modelu EEGNet Fusion oceniono w dwóch scenariuszach: rzeczywistych ruchów i wyobrażeniowych. Dokładność
+    wyniosła odpowiednio 84,1\% oraz 83,8\%, a modele oceniono na odpowiednio podzielonych zbiorach danych
+    \cite{roots2020}.
+
+    \subsection{Porównanie wyników}
+    Poniżej przedstawiono porównanie wyników uzyskanych w obu pracach:
+
+    \begin{table}[h!]
+        \centering
+        \caption{Porównanie wyników dla różnych modeli \cite{boutarfaia2023,roots2020}.}
+        \label{tab:results}
+        \resizebox{\columnwidth}{!}{%
+            \begin{tabular}{|l|c|c|c|c|}
+                \hline
+                \textbf{Model} & \textbf{Dokładność} & \textbf{Precyzja} & \textbf{Recall} & \textbf{F1-Score}
+                \\
+                \hline
+                CNN & 99.86\% & 1.00 & 1.00 & 1.00
+                \\
+                CNN-LSTM & 98.39\% & 0.98 & 0.98 & 0.98
+                \\
+                CNN-BiLSTM & 99.27\% & 1.00 & 0.99 & 0.99
+                \\
+                EEGNet Fusion & 84.1\% (ruch rzeczywisty) & 0.84 & 0.84 & 0.84
+                \\
+                EEGNet Fusion & 83.8\% (ruch wyobrażeniowy) & 0.84 & 0.84 & 0.84
+                \\
+                \hline
+            \end{tabular}%
+        }
+    \end{table}
+
+    Podsumowując, modele hybrydowe, takie jak CNN-BiLSTM, skuteczniej analizują zależności czasowe w sygnałach EEG,
+    podczas gdy standardowe CNN osiąga najwyższą dokładność przy prostszej strukturze. Podejście EEGNet Fusion zapewnia
+    solidne wyniki, ale z nieco niższą dokładnością w porównaniu do klasycznych modeli CNN
+    \cite{boutarfaia2023,roots2020}.
+
+
+\end{document}

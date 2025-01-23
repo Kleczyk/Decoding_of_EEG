@@ -1,0 +1,148 @@
+%! Author = daniel
+%! Date = 20.01.2025
+
+% Preamble
+\documentclass[eeg_v4.tex]{subfiles}
+
+
+% Document
+\begin{document}
+
+    \section{Wybór modeli oraz ich struktur do eksperymentu}
+    W celu przeprowadzenia eksperymentów wybrano modele odpowiednie do analizy danych sekwencyjnych. Jednym z kluczowych
+    zastosowanych modeli jest Long Short-Term Memory (LSTM), opisany szczegółowo w niniejszej sekcji.
+
+    \subsection{Long Short-Term Memory (LSTM)}
+    Model LSTM jest rozwinięciem klasycznej sieci rekurencyjnej (RNN), zaprojektowanym w celu rozwiązania problemów
+    związanych z gradientem znikającym i eksplodującym. Problemy te pojawiają się w klasycznych RNN podczas trenowania
+    sieci na długich sekwencjach danych, prowadząc do trudności w propagowaniu informacji przez wiele kroków czasowych.
+    Sieci RNN mają trudności z uchwyceniem długoterminowych zależności, co ogranicza ich efektywność w zadaniach takich
+    jak analiza szeregów czasowych czy przetwarzanie języka naturalnego \cite{hochreiter1997}.
+
+    \subsubsection{Problemy klasycznych RNN}
+    Gradienty znikające pojawiają się, gdy wartości gradientów stają się coraz mniejsze podczas propagacji wstecznej,
+    przez co wagi nie są efektywnie aktualizowane. Gradienty eksplodujące to odwrotny problem, w którym wartości
+    gradientów rosną wykładniczo, co prowadzi do niestabilności procesu uczenia \cite{sherstinsky2020}.
+
+    LSTM został zaprojektowany, aby zachować długoterminowe informacje w stanie ukrytym, umożliwiając efektywne
+    modelowanie zależności w długich sekwencjach danych.
+
+    \subsubsection{Architektura komórki LSTM}
+
+    Podstawowym elementem sieci LSTM jest pojedyncza komórka LSTM (rysunek \ref{fig:lstm_cell}
+    ), która składa się z trzech bramek kontrolujących przepływ informacji:
+
+    \begin{figure}[h!]
+        \centering
+        \includegraphics[width=0.8\textwidth]{fig/LSTM}
+        \caption{Schemat komórki LSTM przedstawiający przepływ informacji oraz podział na bramki zapomnienia,
+            wejścia i wyjścia \cite{chen2024}.}
+        \label{fig:lstm_cell}
+    \end{figure}
+
+    \begin{itemize}
+        \item \textbf{Bramka zapominania (forget gate):}
+        Decyduje, które informacje z poprzedniego stanu komórki należy usunąć. Wzór:
+        \[
+            f_t = \sigma(W_f \cdot [h_{t-1}, x_t] + b_f)
+        \]
+        gdzie \( f_t \) to wartość bramki zapominania, \( \sigma \) to funkcja sigmoidalna, \( W_f \) to macierz wag,
+        \( h_{t-1} \) to poprzedni stan ukryty, \( x_t \) to dane wejściowe, a \( b_f \) to wektor przesunięcia.
+
+        \item \textbf{Bramka wejścia (input gate):}
+        Odpowiada za aktualizację stanu komórki poprzez dodanie nowych informacji. Wzory:
+        \[
+            i_t = \sigma(W_i \cdot [h_{t-1}, x_t] + b_i),
+        \]
+        \[
+            \tilde{C}_t = \tanh(W_C \cdot [h_{t-1}, x_t] + b_C),
+        \]
+        gdzie \( i_t \) to wartość bramki wejścia, a \( \tilde{C}_t \)
+        to nowe kandydatury informacji, które mogą zostać zapisane.
+
+        \item \textbf{Bramka wyjścia (output gate):}
+        Określa, które informacje zaktualizowanego stanu komórki są wykorzystywane do generowania stanu ukrytego. Wzory:
+        \[
+            o_t = \sigma(W_o \cdot [h_{t-1}, x_t] + b_o),
+        \]
+        \[
+            h_t = o_t \cdot \tanh(C_t),
+        \]
+        gdzie \( h_t \) to stan ukryty w bieżącym kroku czasowym.
+    \end{itemize}
+
+    Aktualizacja stanu komórki \( C_t \) przebiega zgodnie ze wzorem:
+    \[
+        C_t = f_t \cdot C_{t-1} + i_t \cdot \tilde{C}_t.
+    \]
+
+    \subsubsection{Przewagi LSTM nad klasycznymi RNN}
+    Dzięki zastosowaniu mechanizmów bramek, LSTM może efektywnie przechowywać informacje przez długi czas, eliminując
+    problemy gradientów znikających i eksplodujących. LSTM znalazł zastosowanie w wielu dziedzinach, takich jak:
+    \begin{itemize}
+        \item przetwarzanie języka naturalnego (tłumaczenia maszynowe, analiza sentymentu),
+        \item rozpoznawanie mowy,
+        \item analiza szeregów czasowych (prognozowanie finansowe, analiza EEG).
+    \end{itemize}
+
+    Jak wskazuje Sherstinsky \cite{sherstinsky2020}
+    , użycie LSTM w zadaniach sekwencyjnych jest kluczowe dla skutecznego modelowania zależności czasowych.
+
+    \subsubsection{Podsumowanie}
+    LSTM jest wydajnym narzędziem do analizy danych sekwencyjnych, eliminując ograniczenia klasycznych RNN. Dzięki
+    mechanizmom bramek i możliwości długoterminowego przechowywania informacji, LSTM jest obecnie standardem w wielu
+    zastosowaniach związanych z przetwarzaniem danych czasowych.
+
+    \subsection{CNN-LSTM: Hybrydowe podejście do analizy EEG}
+
+    W ramach eksperymentu zastosowano model hybrydowy CNN-LSTM, łączący możliwości sieci splotowych (CNN) i długiej
+    pamięci krótkoterminowej (LSTM). Model ten został zaprojektowany w celu efektywnej klasyfikacji sygnałów EEG,
+    umożliwiając zarówno ekstrakcję cech przestrzennych, jak i modelowanie zależności czasowych. W literaturze wykazano,
+    że takie podejście doskonale nadaje się do zadań związanych z analizą wyobrażonych ruchów (ang. motor imagery, MI)
+    \cite{boutarfaia2023}.
+
+    \subsubsection{Architektura modelu}
+    Struktura CNN-LSTM obejmuje:
+    \begin{itemize}
+        \item
+        Warstwy CNN do ekstrakcji cech przestrzennych, takich jak rozkład elektrod i lokalne wzorce aktywności mózgowej.
+        \item
+        Warstwy LSTM, które modelują zależności czasowe w danych EEG, uwzględniając sekwencyjny charakter sygnałów.
+    \end{itemize}
+
+    Prezentowana architektura łączy kluczowe komponenty obu typów sieci, umożliwiając modelowanie zarówno statycznych,
+    jak i dynamicznych cech danych czasoprzestrzennych.
+
+    \subsubsection{Przewagi CNN-LSTM}
+    \begin{itemize}
+        \item \textbf{Modelowanie czasoprzestrzenne:}
+        Hybrydowe podejście pozwala na uchwycenie zarówno cech przestrzennych, jak i czasowych, co jest kluczowe w
+        analizie sygnałów EEG związanych z ruchem wyobrażonym.
+        \item \textbf{Efektywność w klasyfikacji:} Model CNN-LSTM osiąga wysoką dokładność klasyfikacji (98.39\%
+        ), co potwierdza skuteczność w integracji obu podejść \cite{boutarfaia2023}.
+    \end{itemize}
+
+    \subsubsection{Wady CNN-LSTM}
+    \begin{itemize}
+        \item \textbf{Złożoność obliczeniowa:}
+        Dodanie warstw LSTM znacząco zwiększa liczbę parametrów i wydłuża czas treningu w porównaniu do czystych modeli
+        CNN.
+        \item \textbf{Niższa dokładność niż w CNN:} W porównaniu do modelu CNN, który osiągnął dokładność 99.86\%
+        , model CNN-LSTM charakteryzuje się nieco niższą precyzją, co wskazuje na potencjalny kompromis między
+        złożonością modelu a jego wydajnością.
+    \end{itemize}
+
+    \subsubsection{Zastosowanie modelu w analizie EEG}
+    Model CNN-LSTM został wykorzystany w badaniach nad dekodowaniem intencji ruchowych w kontekście interfejsów
+    mózg-komputer (BCI). Dzięki zdolności do integracji cech przestrzennych i czasowych, model ten stanowi odpowiednie
+    narzędzie do analizy dynamicznych wzorców aktywności mózgowej, umożliwiając precyzyjną klasyfikację wyobrażonych
+    ruchów. W kontekście zadań MI, podejście CNN-LSTM oferuje potencjalne korzyści w zastosowaniach takich jak robotyka
+    wspomagająca czy zaawansowane systemy sterowania.
+
+    \subsubsection{Podsumowanie}
+    Model CNN-LSTM, choć bardziej złożony niż tradycyjne CNN, oferuje unikalne korzyści w kontekście analizy danych
+    czasoprzestrzennych. Jego zastosowanie w klasyfikacji sygnałów EEG podkreśla potencjał w precyzyjnym dekodowaniu
+    intencji ruchowych, jednak należy uwzględnić kompromis między dokładnością a złożonością obliczeniową.
+
+
+\end{document}
